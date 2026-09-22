@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     # Application Info
     APP_ENV: str = Field(default="development", description="Environment: development, testing, production")
     APP_NAME: str = Field(default="Multimodal Document Intelligence API")
+    APP_VERSION: str = Field(default="0.1.0")
     APP_HOST: str = Field(default="0.0.0.0")
     APP_PORT: int = Field(default=8000)
     LOG_LEVEL: str = Field(default="INFO")

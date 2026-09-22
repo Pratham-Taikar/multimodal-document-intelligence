@@ -1,4 +1,4 @@
-"""Initial migration enabling pgvector and uuid extensions
+"""Initial migration enabling the pgvector extension
 
 Revision ID: 0001_pgvector
 Revises: 
@@ -16,12 +16,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Enable pgvector extension for dense vector similarity search
+    # Enable the pgvector extension for future dense vector similarity search.
+    # No application tables are created in the scaffolding phase.
     op.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-    # Enable uuid-ossp extension for UUID generation
-    op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
 
 
 def downgrade() -> None:
     op.execute("DROP EXTENSION IF EXISTS vector;")
-    op.execute('DROP EXTENSION IF EXISTS "uuid-ossp";')

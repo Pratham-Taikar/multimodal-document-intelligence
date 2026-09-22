@@ -1,12 +1,20 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
+
 from app.core.logging import logger
 
 
 class AppException(Exception):
-    """Base exception class for application-level domain errors."""
+    """Base exception for application-level errors carrying a structured payload.
+
+    Raise subclasses (defined alongside the features that need them in later
+    phases) or this base class directly to return a consistent JSON error body:
+    ``{"error": {"code", "message", "details", "path", "timestamp"}}``.
+    """
+
     def __init__(
         self,
         message: str,
@@ -19,28 +27,6 @@ class AppException(Exception):
         self.code = code
         self.status_code = status_code
         self.details = details or {}
-
-
-class DatabaseConnectionError(AppException):
-    """Raised when the primary database is unreachable or unhealthy."""
-    def __init__(self, message: str = "Database connection failed", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            code="DATABASE_UNAVAILABLE",
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            details=details,
-        )
-
-
-class EntityNotFoundError(AppException):
-    """Raised when a requested entity cannot be found."""
-    def __init__(self, entity_name: str, identifier: Any):
-        super().__init__(
-            message=f"{entity_name} with identifier '{identifier}' was not found",
-            code="ENTITY_NOT_FOUND",
-            status_code=status.HTTP_404_NOT_FOUND,
-            details={"entity": entity_name, "identifier": str(identifier)},
-        )
 
 
 def register_exception_handlers(app: FastAPI) -> None:
