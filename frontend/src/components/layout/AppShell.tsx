@@ -17,7 +17,7 @@ export const AppShell: React.FC = () => {
           setHealth(data);
           setLoading(false);
         }
-      } catch (err) {
+      } catch {
         if (isMounted) {
           setHealth(null);
           setLoading(false);
@@ -37,32 +37,61 @@ export const AppShell: React.FC = () => {
   const isPgVectorReady = health?.services?.database?.pgvector_installed === true;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#090d16', color: '#e2e8f0' }}>
-      {/* Header / Navigation */}
-      <header style={{
+    <div
+      style={{
+        minHeight: '100vh',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0.875rem 1.5rem',
-        borderBottom: '1px solid #1e293b',
-        backgroundColor: '#0f172a'
-      }}>
+        flexDirection: 'column',
+        backgroundColor: '#090d16',
+        color: '#e2e8f0',
+      }}
+    >
+      {/* Header / Navigation */}
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.875rem 1.5rem',
+          borderBottom: '1px solid #1e293b',
+          backgroundColor: '#0f172a',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            padding: '0.4rem',
-            backgroundColor: '#3b82f6',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffffff'
-          }}>
+          <div
+            style={{
+              padding: '0.4rem',
+              backgroundColor: '#3b82f6',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffffff',
+            }}
+          >
             <FileText size={18} />
           </div>
-          <Link to="/" style={{ color: '#f8fafc', textDecoration: 'none', fontWeight: 600, fontSize: '1rem', letterSpacing: '-0.01em' }}>
+          <Link
+            to="/"
+            style={{
+              color: '#f8fafc',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
             Multimodal Document Intelligence
           </Link>
-          <span style={{ fontSize: '0.75rem', backgroundColor: '#1e293b', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#94a3b8' }}>
+          <span
+            style={{
+              fontSize: '0.75rem',
+              backgroundColor: '#1e293b',
+              padding: '0.2rem 0.5rem',
+              borderRadius: '4px',
+              color: '#94a3b8',
+            }}
+          >
             v0.1.0-scaffolding
           </span>
         </div>
@@ -86,13 +115,15 @@ export const AppShell: React.FC = () => {
               {loading ? '...' : isDbConnected ? 'Connected' : 'Offline'}
             </span>
             {isDbConnected && (
-              <span style={{
-                fontSize: '0.7rem',
-                backgroundColor: isPgVectorReady ? '#064e3b' : '#78350f',
-                color: isPgVectorReady ? '#6ee7b7' : '#fde68a',
-                padding: '0.1rem 0.35rem',
-                borderRadius: '3px'
-              }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  backgroundColor: isPgVectorReady ? '#064e3b' : '#78350f',
+                  color: isPgVectorReady ? '#6ee7b7' : '#fde68a',
+                  padding: '0.1rem 0.35rem',
+                  borderRadius: '3px',
+                }}
+              >
                 {isPgVectorReady ? 'pgvector ready' : 'no pgvector'}
               </span>
             )}
@@ -101,20 +132,31 @@ export const AppShell: React.FC = () => {
       </header>
 
       {/* Main Content Viewport */}
-      <main style={{ flex: 1, padding: '1.5rem', maxWidth: '1200px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+      <main
+        style={{
+          flex: 1,
+          padding: '1.5rem',
+          maxWidth: '1200px',
+          width: '100%',
+          margin: '0 auto',
+          boxSizing: 'border-box',
+        }}
+      >
         <Outlet context={{ health, loading }} />
       </main>
 
       {/* Footer */}
-      <footer style={{
-        padding: '1rem 1.5rem',
-        borderTop: '1px solid #1e293b',
-        fontSize: '0.75rem',
-        color: '#64748b',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
+      <footer
+        style={{
+          padding: '1rem 1.5rem',
+          borderTop: '1px solid #1e293b',
+          fontSize: '0.75rem',
+          color: '#64748b',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <span>Evidence-First Multimodal Document Intelligence Platform</span>
         <span>Branch: feat/scaffolding</span>
       </footer>

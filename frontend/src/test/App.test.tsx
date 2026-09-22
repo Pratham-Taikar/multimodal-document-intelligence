@@ -26,7 +26,7 @@ describe('App Scaffolding Render Test', () => {
               },
             },
           }),
-      })
+      }),
     );
   });
 
@@ -46,7 +46,9 @@ describe('App Scaffolding Render Test', () => {
     expect(screen.getByText('PostgreSQL 16 + pgvector')).toBeInTheDocument();
 
     // Check footer
-    expect(screen.getByText('Evidence-First Multimodal Document Intelligence Platform')).toBeInTheDocument();
+    expect(
+      screen.getByText('Evidence-First Multimodal Document Intelligence Platform'),
+    ).toBeInTheDocument();
 
     // Wait for the simulated fetch health call to resolve and update UI
     await waitFor(() => {

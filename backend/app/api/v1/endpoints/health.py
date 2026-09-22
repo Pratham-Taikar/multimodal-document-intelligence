@@ -24,7 +24,7 @@ async def get_health():
         "status": overall_status,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "environment": settings.APP_ENV,
-        "version": "0.1.0",
+        "version": settings.APP_VERSION,
         "services": {
             "api": {
                 "status": "healthy",

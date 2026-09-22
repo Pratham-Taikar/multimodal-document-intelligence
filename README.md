@@ -22,4 +22,13 @@ A clean, modular, and grounded multimodal document intelligence platform designe
 
 ## Quick Start (Local Development)
 
-Refer to [docs/development.md](docs/development.md) for detailed setup and environment configuration.
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+* Frontend: http://localhost:5173
+* Backend API: http://localhost:8000 (docs at `/docs`, health at `/api/v1/health`)
+* PostgreSQL 16 + pgvector: `localhost:5433`
+
+Refer to [docs/development.md](docs/development.md) for detailed setup, environment variables, testing, and migrations.

@@ -24,6 +24,12 @@ async def test_health_endpoint_schema(async_client: AsyncClient):
 @pytest.mark.asyncio
 async def test_health_with_active_database(async_client: AsyncClient):
     """Verifies that with active PostgreSQL container, health returns 200 and pgvector is enabled."""
+    from app.db.session import check_db_connectivity
+
+    db_state = await check_db_connectivity()
+    if db_state["status"] != "connected":
+        pytest.skip("PostgreSQL is not reachable; start it with `docker compose up postgres -d`")
+
     response = await async_client.get("/api/v1/health")
     assert response.status_code == 200
     data = response.json()

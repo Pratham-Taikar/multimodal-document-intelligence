@@ -4,14 +4,16 @@ import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export const NotFound: React.FC = () => {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '4rem 1rem',
-      textAlign: 'center',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '4rem 1rem',
+        textAlign: 'center',
+      }}
+    >
       <AlertCircle size={48} color="#f59e0b" style={{ marginBottom: '1rem' }} />
       <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: '0 0 0.5rem 0', color: '#f8fafc' }}>
         404 - Page Not Found

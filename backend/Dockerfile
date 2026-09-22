@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy pyproject.toml first to leverage Docker layer caching
-COPY pyproject.toml .
+# Copy project metadata first to leverage Docker layer caching
+COPY pyproject.toml README.md .
 
 # Install dependencies including development/test dependencies
 RUN pip install --no-cache-dir -e ".[dev]"

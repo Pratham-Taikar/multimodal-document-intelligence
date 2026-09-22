@@ -21,8 +21,8 @@ def create_application() -> FastAPI:
     """Factory function for FastAPI application instance."""
     app = FastAPI(
         title=settings.APP_NAME,
-        version="0.1.0",
-        description="Multimodal Document Intelligence Platform - Grounded Extraction, Retrieval & Learning System",
+        version=settings.APP_VERSION,
+        description="Multimodal Document Intelligence Platform API",
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,
