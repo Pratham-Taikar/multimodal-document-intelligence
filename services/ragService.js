@@ -1,7 +1,5 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const DocumentChunk = require('../models/DocumentChunk');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const { generateText } = require('./aiService');
 
 function calculateSimilarity(query, text) {
   const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
@@ -94,11 +92,9 @@ async function answerQuestion(subjectId, userId, conversation, subjectName) {
 
     prompt += "\nContext:\n" + (context || "No notes available") + "\n\nAssistant:";
 
-    // Call Gemini API
-    const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const rawAnswer = response.text();
+    const rawAnswer = await generateText(prompt, {
+      models: { gemini: process.env.GEMINI_MODEL || 'gemini-2.5-flash' }
+    });
     const answer = sanitizeAnswer(rawAnswer);
 
     // Build citations and evidence
