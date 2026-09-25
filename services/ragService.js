@@ -92,8 +92,12 @@ async function answerQuestion(subjectId, userId, conversation, subjectName) {
 
     prompt += "\nContext:\n" + (context || "No notes available") + "\n\nAssistant:";
 
+    const user = await require('../models/User').findById(userId).lean().catch(() => null);
+    const userApiKey = user?.customApiKey;
+
     const rawAnswer = await generateText(prompt, {
-      models: { gemini: process.env.GEMINI_MODEL || 'gemini-2.5-flash' }
+      apiKey: userApiKey,
+      models: { gemini: process.env.GEMINI_MODEL || 'gemini-1.5-flash' }
     });
     const answer = sanitizeAnswer(rawAnswer);
 

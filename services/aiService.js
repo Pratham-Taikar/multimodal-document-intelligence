@@ -1,11 +1,13 @@
-const DEFAULT_PROVIDER_ORDER = ['openrouter'];
+const DEFAULT_PROVIDER_ORDER = ['gemini', 'openrouter', 'minimax', 'ollama'];
 const TRANSIENT_STATUS_CODES = new Set([429, 500, 502, 503]);
-const DEFAULT_OPENROUTER_MODEL = 'google/gemma-4-31b-it:free';
+const DEFAULT_OPENROUTER_MODEL = 'google/gemini-2.0-flash-exp:free';
 const DEFAULT_OPENROUTER_FALLBACK_MODELS = [
-  'google/gemma-4-26b-a4b-it:free',
-  'qwen/qwen3.8-27b:free'
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen-2.5-72b-instruct:free',
+  'google/gemma-2-9b-it:free',
+  'mistralai/mistral-7b-instruct:free'
 ];
-const DEFAULT_OLLAMA_MODEL = 'llama3.2';
+const DEFAULT_OLLAMA_MODEL = 'llama3.2:1b';
 const DEFAULT_MINIMAX_MODEL = 'MiniMax-Text-01';
 
 class AIProviderError extends Error {
@@ -51,7 +53,7 @@ function isTransientError(error) {
 }
 
 function providerOrder() {
-  const validProviders = new Set(['ollama', 'minimax', 'openrouter']);
+  const validProviders = new Set(['gemini', 'openrouter', 'minimax', 'ollama']);
   const configured = String(process.env.AI_PROVIDER_ORDER || '')
     .split(',')
     .map(provider => provider.trim().toLowerCase())
@@ -75,11 +77,12 @@ function getOpenRouterModels() {
 
 function hasProviderKey(provider, options = {}) {
   if (options.providers?.[provider] || options.implementations?.[provider]) return true;
+  if (provider === 'gemini') return Boolean(options.apiKey || options.geminiApiKey || process.env.GEMINI_API_KEY);
+  if (provider === 'openrouter') return Boolean(process.env.OPENROUTER_API_KEY);
+  if (provider === 'minimax') return Boolean(process.env.MINIMAX_API_KEY);
   if (provider === 'ollama') {
     return Boolean(process.env.OLLAMA_BASE_URL || process.env.OLLAMA_MODEL || process.env.AI_PROVIDER_ORDER?.includes('ollama'));
   }
-  if (provider === 'minimax') return Boolean(process.env.MINIMAX_API_KEY);
-  if (provider === 'openrouter') return Boolean(process.env.OPENROUTER_API_KEY);
   return false;
 }
 
@@ -94,18 +97,82 @@ async function readJsonResponse(provider, response) {
   return response.json();
 }
 
+const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+const GEMINI_FALLBACK_MODELS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-flash-latest'];
+
+function normalizeGeminiModel(rawModel) {
+  if (!rawModel) return DEFAULT_GEMINI_MODEL;
+  const cleaned = String(rawModel).trim().replace(/^models\//, '');
+  if (cleaned.includes('1.5') || cleaned.includes('2.5') || cleaned.includes('1.0') || cleaned.includes('2.0')) {
+    return DEFAULT_GEMINI_MODEL;
+  }
+  return cleaned;
+}
+
+async function generateWithGemini(prompt, modelOverride, options = {}) {
+  const primaryModel = normalizeGeminiModel(modelOverride || process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
+  const modelsToTry = [primaryModel, ...GEMINI_FALLBACK_MODELS.filter(m => m !== primaryModel)];
+  const rawKey = options.apiKey || options.geminiApiKey || process.env.GEMINI_API_KEY;
+  const apiKey = String(rawKey || '').trim();
+  if (!apiKey) {
+    throw new Error("Missing Gemini API Key. Please provide one in Dashboard or .env file.");
+  }
+
+  let lastError;
+  for (const model of modelsToTry) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }]
+        })
+      });
+
+      const data = await readJsonResponse('gemini', response);
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return {
+        text,
+        model
+      };
+    } catch (err) {
+      lastError = err;
+      if (err.status === 404 || err.status === 503 || err.status === 429) {
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError || new Error("All Gemini model endpoints failed.");
+}
+
 async function generateWithOllama(prompt, modelOverride) {
   const model = modelOverride || process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL;
   const baseUrl = (process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1').replace(/\/+$/, '');
+  
+  const payload = {
+    model,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.2,
+    stream: false
+  };
+
+  if (prompt.includes('JSON') || prompt.includes('questions')) {
+    payload.response_format = { type: 'json_object' };
+  }
+
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    body: JSON.stringify(payload)
   });
   const data = await readJsonResponse('ollama', response);
   return {
@@ -161,6 +228,7 @@ async function generateWithOpenRouter(prompt, modelOverride) {
 }
 
 const providerImplementations = {
+  gemini: generateWithGemini,
   ollama: generateWithOllama,
   minimax: generateWithMiniMax,
   openrouter: generateWithOpenRouter
@@ -193,7 +261,9 @@ async function generateText(prompt, options = {}) {
     }
 
     let model;
-    if (provider === 'openrouter') {
+    if (provider === 'gemini') {
+      model = options.models?.[provider] || options.model || process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
+    } else if (provider === 'openrouter') {
       model = getOpenRouterModels()[0];
     } else if (provider === 'ollama') {
       model = options.models?.[provider] || options.model || process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL;
@@ -208,7 +278,7 @@ async function generateText(prompt, options = {}) {
     while (true) {
       console.info('AI provider attempt', { provider, model, retryCount });
       try {
-        const result = await generate(prompt, model);
+        const result = await generate(prompt, model, options);
         const text = typeof result === 'string' ? result : result.text;
         console.info('AI provider success', {
           provider,

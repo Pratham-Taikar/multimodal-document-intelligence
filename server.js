@@ -53,10 +53,21 @@ app.get('/login', isGuest, (req, res) => res.render('auth'));
 
 app.get('/dashboard', isAuthenticated, async (req, res) => {
   try {
+    const user = await User.findById(req.session.userId);
     const subjects = await Subject.find({ userId: req.session.userId });
-    res.render('dashboard', { subjects });
+    res.render('dashboard', { subjects, user, hasEnvGeminiKey: Boolean(process.env.GEMINI_API_KEY) });
   } catch (error) {
     res.status(500).send('Error loading dashboard');
+  }
+});
+
+app.post('/api/user/key', isAuthenticated, async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    await User.findByIdAndUpdate(req.session.userId, { customApiKey: String(apiKey || '').trim() });
+    res.json({ message: 'API key updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

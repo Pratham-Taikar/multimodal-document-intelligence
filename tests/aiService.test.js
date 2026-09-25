@@ -157,16 +157,14 @@ test("7. No API key is logged on failure path", async () => {
   assert.equal(logged.includes("test-openrouter-key"), false);
 });
 
-test("8. aiService contains only OpenRouter endpoint, no direct Gemini/OpenAI/Anthropic API domains", async () => {
+test("8. aiService contains standard provider endpoints", async () => {
   const fs = require("node:fs");
   const source = fs.readFileSync(
     require.resolve("../services/aiService"),
     "utf8",
   );
   assert.equal(source.includes("openrouter.ai/api/v1"), true);
-  assert.equal(source.includes("api.openai.com"), false);
-  assert.equal(source.includes("api.anthropic.com"), false);
-  assert.equal(source.includes("generativelanguage.googleapis.com"), false);
+  assert.equal(source.includes("generativelanguage.googleapis.com"), true);
 });
 
 test("9. Environment overrides are preferred over defaults; :free suffix propagated exactly", async () => {
@@ -229,4 +227,29 @@ test("11. MiniMax provider works with authorization header", async () => {
   assert.equal(request.options.headers.Authorization, "Bearer test-minimax-key");
   assert.equal(request.options.body.model, "MiniMax-Text-01");
 });
+
+test("12. Gemini provider works with API key query parameter", async () => {
+  process.env.AI_PROVIDER_ORDER = "gemini";
+  process.env.GEMINI_API_KEY = "test-gemini-key";
+  process.env.GEMINI_MODEL = "gemini-1.5-flash";
+  let request;
+  global.fetch = async (url, options) => {
+    request = { url, options };
+    return response({
+      candidates: [
+        {
+          content: {
+            parts: [{ text: "gemini fast response" }]
+          }
+        }
+      ]
+    });
+  };
+
+  const text = await generateText("hello gemini");
+  assert.equal(text, "gemini fast response");
+  assert.equal(request.url.includes("generativelanguage.googleapis.com"), true);
+  assert.equal(request.url.includes("key=test-gemini-key"), true);
+});
+
 

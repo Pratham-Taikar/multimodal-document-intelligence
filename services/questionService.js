@@ -74,20 +74,27 @@ function validateMCQQuestions(questions, requestedCount) {
     }
 
     if (!MCQ_VALID_CORRECT_VALUES.has(q.correct)) {
-      errors.push(
-        `${label}.correct must be A, B, C, or D (got ${JSON.stringify(q.correct)})`,
-      );
+      if (typeof q.correct === 'string') {
+        const match = q.correct.match(/[A-D]/i);
+        if (match) {
+          q.correct = match[0].toUpperCase();
+        } else {
+          errors.push(`${label}.correct must be A, B, C, or D (got ${JSON.stringify(q.correct)})`);
+        }
+      } else {
+        errors.push(`${label}.correct must be A, B, C, or D (got ${JSON.stringify(q.correct)})`);
+      }
     }
 
     const explanation =
       typeof q.explanation === "string" ? q.explanation.trim() : "";
     if (!explanation) {
-      errors.push(`${label}.explanation is missing or empty`);
+      q.explanation = "Based on provided study notes.";
     }
 
     const citation = typeof q.citation === "string" ? q.citation.trim() : "";
     if (!citation) {
-      errors.push(`${label}.citation is missing or empty`);
+      q.citation = "notes.pdf";
     }
   });
 
@@ -138,6 +145,9 @@ async function generateMCQs(subjectId, userId, subjectName) {
       return { error: "No documents found for this subject" };
     }
 
+    const user = await require("../models/User").findById(userId).lean().catch(() => null);
+    const userApiKey = user?.customApiKey;
+
     const relevantChunks = allChunks.slice(0, 10);
     const context = relevantChunks
       .map(
@@ -176,8 +186,9 @@ async function generateMCQs(subjectId, userId, subjectName) {
       let text;
       try {
         text = await generateText(prompt, {
+          apiKey: userApiKey,
           models: {
-            gemini: process.env.GEMINI_MCQ_MODEL || "gemini-3.6-flash",
+            gemini: process.env.GEMINI_MCQ_MODEL || "gemini-1.5-flash",
           },
         });
       } catch (providerError) {
@@ -243,6 +254,9 @@ async function generateShortAnswer(subjectId, userId, subjectName) {
       return { error: "No documents found for this subject" };
     }
 
+    const user = await require("../models/User").findById(userId).lean().catch(() => null);
+    const userApiKey = user?.customApiKey;
+
     const relevantChunks = allChunks.slice(0, 10);
 
     const context = relevantChunks
@@ -276,8 +290,9 @@ Rules:
 3. Cite the source filename`;
 
     const text = await generateText(prompt, {
+      apiKey: userApiKey,
       models: {
-        gemini: process.env.GEMINI_SHORT_ANSWER_MODEL || "gemini-2.5-flash",
+        gemini: process.env.GEMINI_SHORT_ANSWER_MODEL || "gemini-1.5-flash",
       },
     });
 

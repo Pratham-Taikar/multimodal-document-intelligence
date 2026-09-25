@@ -8,6 +8,54 @@
 
     <div class="max-w-7xl mx-auto px-6 py-8">
 
+        <!-- API Key Configuration Section -->
+        <div class="bg-white border border-dorado-200 rounded-xl shadow-sm p-6 mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-semibold text-dorado-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-dorado-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                    </svg>
+                    Google Gemini API Key
+                </h2>
+                <% if (user && user.customApiKey) { %>
+                    <span class="bg-green-100 text-green-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Custom Key Active</span>
+                <% } else if (hasEnvGeminiKey) { %>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded-full font-medium">System Key Active</span>
+                <% } else { %>
+                    <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Key Needed</span>
+                <% } %>
+            </div>
+            <p class="text-sm text-dorado-600 mb-4">
+                Paste your Gemini API key below for generation. 
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-dorado-700 underline font-medium hover:text-dorado-900">Get a free key here (Google AI Studio)</a>.
+            </p>
+            
+            <form id="saveApiKeyForm" class="flex gap-3">
+                <input 
+                    type="password" 
+                    id="userApiKey" 
+                    name="apiKey"
+                    value="<%= (user && user.customApiKey) ? user.customApiKey : '' %>"
+                    placeholder="AIzaSy..." 
+                    class="flex-1 px-4 py-2 border border-dorado-300 rounded-md focus:outline-none focus:ring-2 focus:ring-dorado-500 focus:border-dorado-500 font-mono text-sm"
+                    required
+                >
+                <button 
+                    type="button" 
+                    id="toggleKeyVisibility" 
+                    class="border border-dorado-300 text-dorado-700 hover:bg-dorado-100 px-3 py-2 rounded-md text-sm transition-colors"
+                >
+                    Show
+                </button>
+                <button 
+                    type="submit" 
+                    class="bg-dorado-600 hover:bg-dorado-700 text-white px-6 py-2 rounded-md transition-colors"
+                >
+                    Save Key
+                </button>
+            </form>
+        </div>
+
         <!-- Create Subject Section -->
         <div class="bg-white border border-dorado-200 rounded-xl shadow-sm p-6 mb-8">
             <h2 class="text-xl font-semibold text-dorado-800 mb-4">Create New Subject</h2>
@@ -87,6 +135,43 @@
     <%- include('partials/footer') %> 
 
     <script>
+        // Toggle Key Visibility
+        const keyInput = document.getElementById('userApiKey');
+        const toggleBtn = document.getElementById('toggleKeyVisibility');
+        if (toggleBtn && keyInput) {
+            toggleBtn.addEventListener('click', () => {
+                if (keyInput.type === 'password') {
+                    keyInput.type = 'text';
+                    toggleBtn.innerText = 'Hide';
+                } else {
+                    keyInput.type = 'password';
+                    toggleBtn.innerText = 'Show';
+                }
+            });
+        }
+
+        // Save API Key
+        document.getElementById('saveApiKeyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const apiKey = document.getElementById('userApiKey').value.trim();
+            try {
+                const response = await fetch('/api/user/key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast('Gemini API key saved successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(data.message || 'Error saving API key', 'error');
+                }
+            } catch (err) {
+                showToast('Network error saving API key', 'error');
+            }
+        });
+
         // Create Subject
         document.getElementById('createSubjectForm').addEventListener('submit', async (e) => {
             e.preventDefault();
