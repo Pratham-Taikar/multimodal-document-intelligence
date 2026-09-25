@@ -189,3 +189,44 @@ test("9. Environment overrides are preferred over defaults; :free suffix propaga
   ]);
   assert.equal(request.body.model, "custom/model:free");
 });
+
+test("10. Ollama provider works offline without API key", async () => {
+  process.env.AI_PROVIDER_ORDER = "ollama";
+  process.env.OLLAMA_MODEL = "llama3.2";
+  process.env.OLLAMA_BASE_URL = "http://localhost:11434/v1";
+  let request;
+  global.fetch = async (url, options) => {
+    request = { url, body: JSON.parse(options.body) };
+    return response({
+      model: "llama3.2",
+      choices: [{ message: { content: "ollama offline response" } }],
+    });
+  };
+
+  const text = await generateText("hello ollama");
+  assert.equal(text, "ollama offline response");
+  assert.equal(request.url, "http://localhost:11434/v1/chat/completions");
+  assert.equal(request.body.model, "llama3.2");
+});
+
+test("11. MiniMax provider works with authorization header", async () => {
+  process.env.AI_PROVIDER_ORDER = "minimax";
+  process.env.MINIMAX_API_KEY = "test-minimax-key";
+  process.env.MINIMAX_MODEL = "MiniMax-Text-01";
+  process.env.MINIMAX_BASE_URL = "https://api.minimax.chat/v1";
+  let request;
+  global.fetch = async (url, options) => {
+    request = { url, options: { ...options, body: JSON.parse(options.body) } };
+    return response({
+      model: "MiniMax-Text-01",
+      choices: [{ message: { content: "minimax response" } }],
+    });
+  };
+
+  const text = await generateText("hello minimax");
+  assert.equal(text, "minimax response");
+  assert.equal(request.url, "https://api.minimax.chat/v1/chat/completions");
+  assert.equal(request.options.headers.Authorization, "Bearer test-minimax-key");
+  assert.equal(request.options.body.model, "MiniMax-Text-01");
+});
+
