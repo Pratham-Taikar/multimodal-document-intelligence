@@ -3,7 +3,9 @@ const DocumentChunk = require('../models/DocumentChunk');
 const path = require('path');
 const { 
   extractTextFromPDF, 
-  extractTextFromTXT, 
+  extractTextFromTXT,
+  extractTextFromDOCX,
+  extractTextFromPPTX, 
   chunkText 
 } = require('../services/documentProcessor');
 
@@ -66,8 +68,12 @@ async function processDocument(buffer, originalName, subjectId, userId) {
     text = await extractTextFromPDF(buffer);
   } else if (ext === '.txt') {
     text = extractTextFromTXT(buffer);
+  } else if (ext === '.docx' || ext === '.doc') {
+    text = await extractTextFromDOCX(buffer);
+  } else if (ext === '.pptx' || ext === '.ppt') {
+    text = await extractTextFromPPTX(buffer);
   } else {
-    throw new Error('Unsupported file type');
+    throw new Error('Unsupported file type. Please upload PDF, TXT, DOCX, or PPTX.');
   }
 
   if (!text || text.trim().length === 0) {

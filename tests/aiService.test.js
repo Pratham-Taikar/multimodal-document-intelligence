@@ -252,4 +252,99 @@ test("12. Gemini provider works with API key query parameter", async () => {
   assert.equal(request.url.includes("key=test-gemini-key"), true);
 });
 
+test("13. Groq provider works with Bearer auth and fast model", async () => {
+  process.env.AI_PROVIDER_ORDER = "groq";
+  process.env.GROQ_API_KEY = "gsk-test-key";
+  process.env.GROQ_MODEL = "llama-3.1-8b-instant";
+  let request;
+  global.fetch = async (url, options) => {
+    request = { url, options: { ...options, body: JSON.parse(options.body) } };
+    return response({
+      model: "llama-3.1-8b-instant",
+      choices: [{ message: { content: "groq ultra fast response" } }],
+    });
+  };
+
+  const text = await generateText("hello groq");
+  assert.equal(text, "groq ultra fast response");
+  assert.equal(request.url, "https://api.groq.com/openai/v1/chat/completions");
+  assert.equal(request.options.headers.Authorization, "Bearer gsk-test-key");
+  assert.equal(request.options.body.model, "llama-3.1-8b-instant");
+});
+
+test("14. Gemini multi-key rotation rotates from exhausted key1 (429) to key2", async () => {
+  process.env.AI_PROVIDER_ORDER = "gemini";
+  process.env.GEMINI_API_KEYS = "key-exhausted,key-active";
+  const attemptedKeys = [];
+
+  global.fetch = async (url) => {
+    const keyMatch = url.match(/key=([^&]+)/);
+    const key = keyMatch ? keyMatch[1] : "";
+    attemptedKeys.push(key);
+
+    if (key === "key-exhausted") {
+      return response({ error: { message: "Quota exceeded for quota metric", code: 429 } }, 429);
+    }
+    return response({
+      candidates: [{ content: { parts: [{ text: "success with key2" }] } }]
+    });
+  };
+
+  const text = await generateText("test rotation");
+  assert.equal(text, "success with key2");
+  assert.equal(attemptedKeys.includes("key-exhausted"), true);
+  assert.equal(attemptedKeys.includes("key-active"), true);
+});
+
+test("15. Automatic cascade from Gemini (exhausted) to Groq", async () => {
+  process.env.AI_PROVIDER_ORDER = "gemini,groq";
+  process.env.GEMINI_API_KEY = "exhausted-gemini";
+  process.env.GROQ_API_KEY = "active-groq";
+  process.env.AI_MAX_RETRIES = "0";
+
+  let calledGroq = false;
+  global.fetch = async (url) => {
+    if (url.includes("generativelanguage.googleapis.com")) {
+      return response({ error: { message: "RESOURCE_EXHAUSTED", status: "RESOURCE_EXHAUSTED" } }, 429);
+    }
+    if (url.includes("api.groq.com")) {
+      calledGroq = true;
+      return response({
+        choices: [{ message: { content: "groq rescued response" } }]
+      });
+    }
+    return response({ error: "unexpected url" }, 500);
+  };
+
+  const text = await generateText("cascade test");
+  assert.equal(text, "groq rescued response");
+  assert.equal(calledGroq, true);
+});
+
+test("16. Automatic cascade from Gemini and Groq to Ollama", async () => {
+  process.env.AI_PROVIDER_ORDER = "gemini,groq,ollama";
+  process.env.GEMINI_API_KEY = "exhausted-gemini";
+  process.env.GROQ_API_KEY = "exhausted-groq";
+  process.env.OLLAMA_MODEL = "llama3.2:1b";
+  process.env.AI_MAX_RETRIES = "0";
+
+  let calledOllama = false;
+  global.fetch = async (url) => {
+    if (url.includes("generativelanguage.googleapis.com") || url.includes("api.groq.com")) {
+      return response({ error: "rate limit" }, 429);
+    }
+    if (url.includes("11434")) {
+      calledOllama = true;
+      return response({
+        choices: [{ message: { content: "ollama local rescue" } }]
+      });
+    }
+    return response({ error: "unexpected" }, 500);
+  };
+
+  const text = await generateText("ollama fallback test");
+  assert.equal(text, "ollama local rescue");
+  assert.equal(calledOllama, true);
+});
+
 

@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   name: { type: String, required: true },
   customApiKey: { type: String, default: '' },
+  customGroqApiKey: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -147,6 +147,7 @@ async function generateMCQs(subjectId, userId, subjectName) {
 
     const user = await require("../models/User").findById(userId).lean().catch(() => null);
     const userApiKey = user?.customApiKey;
+    const userGroqApiKey = user?.customGroqApiKey;
 
     const relevantChunks = allChunks.slice(0, 10);
     const context = relevantChunks
@@ -187,6 +188,7 @@ async function generateMCQs(subjectId, userId, subjectName) {
       try {
         text = await generateText(prompt, {
           apiKey: userApiKey,
+          groqApiKey: userGroqApiKey,
           models: {
             gemini: process.env.GEMINI_MCQ_MODEL || "gemini-1.5-flash",
           },
@@ -256,6 +258,7 @@ async function generateShortAnswer(subjectId, userId, subjectName) {
 
     const user = await require("../models/User").findById(userId).lean().catch(() => null);
     const userApiKey = user?.customApiKey;
+    const userGroqApiKey = user?.customGroqApiKey;
 
     const relevantChunks = allChunks.slice(0, 10);
 
@@ -291,6 +294,7 @@ Rules:
 
     const text = await generateText(prompt, {
       apiKey: userApiKey,
+      groqApiKey: userGroqApiKey,
       models: {
         gemini: process.env.GEMINI_SHORT_ANSWER_MODEL || "gemini-1.5-flash",
       },

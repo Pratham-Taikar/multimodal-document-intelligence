@@ -15,8 +15,9 @@ const Subject = require('./models/Subject');
 // Routes
 const documentRoutes = require('./routes/documentRoutes');
 const questionRoutes = require('./routes/questionRoutes')
-const subjectRoutes = require('./routes/subjectRoutes')
-const chatRoutes = require('./routes/chatRoutes')
+const subjectRoutes = require('./routes/subjectRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const studyRoutes = require('./routes/studyRoutes');
 
 // Middleware
 const {isAuthenticated, isGuest} = require("./middleware/auth")
@@ -55,7 +56,12 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     const subjects = await Subject.find({ userId: req.session.userId });
-    res.render('dashboard', { subjects, user, hasEnvGeminiKey: Boolean(process.env.GEMINI_API_KEY) });
+    res.render('dashboard', { 
+      subjects, 
+      user, 
+      hasEnvGeminiKey: Boolean(process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEYS),
+      hasEnvGroqKey: Boolean(process.env.GROQ_API_KEY || process.env.GROQ_API_KEYS)
+    });
   } catch (error) {
     res.status(500).send('Error loading dashboard');
   }
@@ -63,9 +69,12 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
 
 app.post('/api/user/key', isAuthenticated, async (req, res) => {
   try {
-    const { apiKey } = req.body;
-    await User.findByIdAndUpdate(req.session.userId, { customApiKey: String(apiKey || '').trim() });
-    res.json({ message: 'API key updated successfully' });
+    const { apiKey, groqApiKey } = req.body;
+    const updates = {};
+    if (apiKey !== undefined) updates.customApiKey = String(apiKey || '').trim();
+    if (groqApiKey !== undefined) updates.customGroqApiKey = String(groqApiKey || '').trim();
+    await User.findByIdAndUpdate(req.session.userId, updates);
+    res.json({ message: 'API keys updated successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -127,7 +136,10 @@ app.use('/api/subjects', isAuthenticated, subjectRoutes);
 app.use('/api/chat/message', isAuthenticated, chatRoutes);
 
 //  Questions
-app.use('/api/questions', isAuthenticated, questionRoutes)
+app.use('/api/questions', isAuthenticated, questionRoutes);
+
+// Study Modules (Summaries & Flashcards)
+app.use('/api/study', isAuthenticated, studyRoutes);
 
 // 404 handler 
 app.use((req, res) => {

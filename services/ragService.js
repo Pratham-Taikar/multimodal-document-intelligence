@@ -94,9 +94,11 @@ async function answerQuestion(subjectId, userId, conversation, subjectName) {
 
     const user = await require('../models/User').findById(userId).lean().catch(() => null);
     const userApiKey = user?.customApiKey;
+    const userGroqApiKey = user?.customGroqApiKey;
 
     const rawAnswer = await generateText(prompt, {
       apiKey: userApiKey,
+      groqApiKey: userGroqApiKey,
       models: { gemini: process.env.GEMINI_MODEL || 'gemini-1.5-flash' }
     });
     const answer = sanitizeAnswer(rawAnswer);

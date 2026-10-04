@@ -1,49 +1,47 @@
-<footer class="bg-dorado-900 text-dorado-300 mt-20">
-    <div class="max-w-7xl mx-auto px-6 py-12">
+<footer class="bg-[#080c14] border-t border-slate-800/80 text-slate-400 mt-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
 
         <div class="grid md:grid-cols-3 gap-10">
 
             <!-- Brand -->
             <div>
-                <h2 class="text-xl font-semibold text-white mb-4">
-                    AskMyNotes
-                </h2>
-                <p class="text-sm text-dorado-400 leading-relaxed">
-                    AI-powered study companion designed to help you
-                    learn directly from your own subject notes.
+                <div class="flex items-center gap-2.5 mb-3">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/25">
+                        <i class="fa-solid fa-brain text-sm"></i>
+                    </div>
+                    <span class="text-lg font-bold text-white tracking-tight">AskMyNotes</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed max-w-sm">
+                    Grounded multimodal document intelligence platform designed to transform lectures, slides, and textbooks into verifiable study notes, flashcards, and quizzes.
                 </p>
             </div>
 
             <!-- Navigation -->
             <div>
-                <h3 class="text-white font-semibold mb-4">
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider font-mono mb-4">
                     Navigation
                 </h3>
-                <ul class="space-y-2 text-sm">
+                <ul class="space-y-2 text-xs">
                     <li>
-                        <a href="/"
-                           class="hover:text-white transition">
+                        <a href="/" class="hover:text-indigo-400 transition-colors">
                             Home
                         </a>
                     </li>
 
                     <% if (isLoggedIn) { %>
                         <li>
-                            <a href="/dashboard"
-                               class="hover:text-white transition">
+                            <a href="/dashboard" class="hover:text-indigo-400 transition-colors">
                                 Dashboard
                             </a>
                         </li>
                     <% } else { %>
                         <li>
-                            <a href="/register"
-                               class="hover:text-white transition">
+                            <a href="/register" class="hover:text-indigo-400 transition-colors">
                                 Sign Up
                             </a>
                         </li>
                         <li>
-                            <a href="/login"
-                               class="hover:text-white transition">
+                            <a href="/login" class="hover:text-indigo-400 transition-colors">
                                 Sign In
                             </a>
                         </li>
@@ -51,24 +49,29 @@
                 </ul>
             </div>
 
-            <!-- Tech -->
+            <!-- Tech Engine -->
             <div>
-                <h3 class="text-white font-semibold mb-4">
-                    Built With
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider font-mono mb-4">
+                    AI Ingestion Architecture
                 </h3>
-                <p class="text-sm text-dorado-400">
-                    Node.js • Express • MongoDB • EJS • TailwindCSS
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Powered by Google Gemini 2.5 Flash, Groq Cloud LPU (~500 t/s), and Local Ollama with strict RAG provenance validation.
                 </p>
-                <p class="text-sm text-dorado-500 mt-3">
-                    Designed for focused, intelligent learning.
-                </p>
+                <div class="flex items-center gap-2 mt-4 text-xs text-slate-500 font-mono">
+                    <span>PDF</span> &bull; <span>DOCX</span> &bull; <span>PPTX</span> &bull; <span>TXT</span>
+                </div>
             </div>
 
         </div>
 
-        <!-- Bottom Line -->
-        <div class="border-t border-dorado-700 mt-10 pt-6 text-center text-sm text-dorado-500">
-            © <%= new Date().getFullYear() %> AskMyNotes. All rights reserved.
+        <div class="mt-10 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+            <p>&copy; 2026 AskMyNotes AI. All rights reserved.</p>
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center gap-1.5 text-emerald-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>All Systems Operational</span>
+                </span>
+            </div>
         </div>
 
     </div>

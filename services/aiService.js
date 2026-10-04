@@ -1,4 +1,4 @@
-const DEFAULT_PROVIDER_ORDER = ['gemini', 'openrouter', 'minimax', 'ollama'];
+const DEFAULT_PROVIDER_ORDER = ['gemini', 'groq', 'openrouter', 'minimax', 'ollama'];
 const TRANSIENT_STATUS_CODES = new Set([429, 500, 502, 503]);
 const DEFAULT_OPENROUTER_MODEL = 'google/gemini-2.0-flash-exp:free';
 const DEFAULT_OPENROUTER_FALLBACK_MODELS = [
@@ -6,6 +6,11 @@ const DEFAULT_OPENROUTER_FALLBACK_MODELS = [
   'qwen/qwen-2.5-72b-instruct:free',
   'google/gemma-2-9b-it:free',
   'mistralai/mistral-7b-instruct:free'
+];
+const DEFAULT_GROQ_MODEL = 'llama-3.1-8b-instant';
+const DEFAULT_GROQ_FALLBACK_MODELS = [
+  'llama-3.3-70b-versatile',
+  'gemma2-9b-it'
 ];
 const DEFAULT_OLLAMA_MODEL = 'llama3.2:1b';
 const DEFAULT_MINIMAX_MODEL = 'MiniMax-Text-01';
@@ -48,12 +53,31 @@ function isTransientError(error) {
     'fetch failed',
     'network error',
     'timeout',
-    'timed out'
+    'timed out',
+    'resource_exhausted',
+    'quota'
   ].some(value => code.includes(value) || message.includes(value));
 }
 
+function extractApiKeys(raw) {
+  if (!raw) return [];
+  const list = Array.isArray(raw) ? raw : [raw];
+  const keys = [];
+  for (const item of list) {
+    if (!item) continue;
+    const parts = String(item).split(/[\n,;]+/);
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed && !keys.includes(trimmed)) {
+        keys.push(trimmed);
+      }
+    }
+  }
+  return keys;
+}
+
 function providerOrder() {
-  const validProviders = new Set(['gemini', 'openrouter', 'minimax', 'ollama']);
+  const validProviders = new Set(['gemini', 'groq', 'openrouter', 'minimax', 'ollama']);
   const configured = String(process.env.AI_PROVIDER_ORDER || '')
     .split(',')
     .map(provider => provider.trim().toLowerCase())
@@ -77,11 +101,18 @@ function getOpenRouterModels() {
 
 function hasProviderKey(provider, options = {}) {
   if (options.providers?.[provider] || options.implementations?.[provider]) return true;
-  if (provider === 'gemini') return Boolean(options.apiKey || options.geminiApiKey || process.env.GEMINI_API_KEY);
+  if (provider === 'gemini') {
+    const keys = extractApiKeys([options.apiKey, options.geminiApiKey, options.apiKeys, options.geminiApiKeys, process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY]);
+    return keys.length > 0;
+  }
+  if (provider === 'groq') {
+    const keys = extractApiKeys([options.groqApiKey, options.groqApiKeys, process.env.GROQ_API_KEYS, process.env.GROQ_API_KEY]);
+    return keys.length > 0;
+  }
   if (provider === 'openrouter') return Boolean(process.env.OPENROUTER_API_KEY);
   if (provider === 'minimax') return Boolean(process.env.MINIMAX_API_KEY);
   if (provider === 'ollama') {
-    return Boolean(process.env.OLLAMA_BASE_URL || process.env.OLLAMA_MODEL || process.env.AI_PROVIDER_ORDER?.includes('ollama'));
+    return Boolean(process.env.OLLAMA_BASE_URL || process.env.OLLAMA_MODEL || process.env.AI_PROVIDER_ORDER?.includes('ollama') || true);
   }
   return false;
 }
@@ -112,44 +143,141 @@ function normalizeGeminiModel(rawModel) {
 async function generateWithGemini(prompt, modelOverride, options = {}) {
   const primaryModel = normalizeGeminiModel(modelOverride || process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
   const modelsToTry = [primaryModel, ...GEMINI_FALLBACK_MODELS.filter(m => m !== primaryModel)];
-  const rawKey = options.apiKey || options.geminiApiKey || process.env.GEMINI_API_KEY;
-  const apiKey = String(rawKey || '').trim();
-  if (!apiKey) {
+  const keys = extractApiKeys([
+    options.apiKey,
+    options.geminiApiKey,
+    options.apiKeys,
+    options.geminiApiKeys,
+    process.env.GEMINI_API_KEYS,
+    process.env.GEMINI_API_KEY
+  ]);
+
+  if (keys.length === 0) {
     throw new Error("Missing Gemini API Key. Please provide one in Dashboard or .env file.");
   }
 
   let lastError;
-  for (const model of modelsToTry) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
-        })
-      });
+  for (let kIdx = 0; kIdx < keys.length; kIdx++) {
+    const apiKey = keys[kIdx];
+    let keyExhausted = false;
 
-      const data = await readJsonResponse('gemini', response);
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      return {
-        text,
-        model
-      };
-    } catch (err) {
-      lastError = err;
-      if (err.status === 404 || err.status === 503 || err.status === 429) {
-        continue;
+    for (const model of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: prompt }]
+            }]
+          })
+        });
+
+        const data = await readJsonResponse('gemini', response);
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return {
+          text,
+          model
+        };
+      } catch (err) {
+        lastError = err;
+        const msg = String(err.message || '').toLowerCase();
+        if (err.status === 429 || err.status === 403 || msg.includes('quota') || msg.includes('resource_exhausted')) {
+          console.warn(`[Gemini] Key #${kIdx + 1} quota/rate-limited (status ${err.status}). Rotating to next key...`);
+          keyExhausted = true;
+          break; // Try next key
+        }
+        if (err.status === 404 || err.status === 503) {
+          continue; // Try next model on same key
+        }
+        throw err;
       }
-      throw err;
+    }
+
+    if (keyExhausted && kIdx < keys.length - 1) {
+      continue;
     }
   }
 
-  throw lastError || new Error("All Gemini model endpoints failed.");
+  if (lastError && !lastError.status) {
+    lastError.status = 429;
+  }
+  throw lastError || new Error("All Gemini keys and model endpoints failed.");
+}
+
+async function generateWithGroq(prompt, modelOverride, options = {}) {
+  const primaryModel = modelOverride || process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL;
+  const models = [primaryModel, ...DEFAULT_GROQ_FALLBACK_MODELS.filter(m => m !== primaryModel)];
+  const keys = extractApiKeys([
+    options.groqApiKey,
+    options.groqApiKeys,
+    process.env.GROQ_API_KEYS,
+    process.env.GROQ_API_KEY
+  ]);
+
+  if (keys.length === 0) {
+    throw new Error("Missing Groq API Key. Please provide one in Dashboard or .env file.");
+  }
+
+  const baseUrl = (process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/+$/, '');
+  let lastError;
+
+  for (let kIdx = 0; kIdx < keys.length; kIdx++) {
+    const apiKey = keys[kIdx];
+    let keyExhausted = false;
+
+    for (const model of models) {
+      try {
+        const payload = {
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2
+        };
+
+        if (prompt.includes('JSON') || prompt.includes('questions')) {
+          payload.response_format = { type: 'json_object' };
+        }
+
+        const response = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await readJsonResponse('groq', response);
+        return {
+          text: data.choices?.[0]?.message?.content || '',
+          model: data.model || model
+        };
+      } catch (err) {
+        lastError = err;
+        if (err.status === 429 || err.status === 403) {
+          console.warn(`[Groq] Key #${kIdx + 1} quota/rate-limited (status ${err.status}). Rotating to next key/provider...`);
+          keyExhausted = true;
+          break;
+        }
+        if (err.status === 404 || err.status === 503) {
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (keyExhausted && kIdx < keys.length - 1) {
+      continue;
+    }
+  }
+
+  if (lastError && !lastError.status) {
+    lastError.status = 429;
+  }
+  throw lastError || new Error("All Groq keys and model endpoints failed.");
 }
 
 async function generateWithOllama(prompt, modelOverride) {
@@ -160,7 +288,12 @@ async function generateWithOllama(prompt, modelOverride) {
     model,
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.2,
-    stream: false
+    stream: false,
+    options: {
+      num_ctx: Number(process.env.OLLAMA_NUM_CTX || 2048),
+      num_predict: Number(process.env.OLLAMA_NUM_PREDICT || 512),
+      num_thread: Number(process.env.OLLAMA_NUM_THREADS || 4)
+    }
   };
 
   if (prompt.includes('JSON') || prompt.includes('questions')) {
@@ -229,6 +362,7 @@ async function generateWithOpenRouter(prompt, modelOverride) {
 
 const providerImplementations = {
   gemini: generateWithGemini,
+  groq: generateWithGroq,
   ollama: generateWithOllama,
   minimax: generateWithMiniMax,
   openrouter: generateWithOpenRouter
@@ -263,6 +397,8 @@ async function generateText(prompt, options = {}) {
     let model;
     if (provider === 'gemini') {
       model = options.models?.[provider] || options.model || process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
+    } else if (provider === 'groq') {
+      model = options.models?.[provider] || options.model || process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL;
     } else if (provider === 'openrouter') {
       model = getOpenRouterModels()[0];
     } else if (provider === 'ollama') {

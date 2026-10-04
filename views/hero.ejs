@@ -1,61 +1,115 @@
-<%- include("partials/header", { title: "AskMyNotes" }) %>
+<%- include("partials/header", { title: "AskMyNotes - AI Academic Intelligence" }) %>
 <%- include("partials/navbar") %>
 
-<section class="min-h-[85vh] flex items-center bg-gradient-to-b from-dorado-50 to-white px-6">
+<section class="min-h-[88vh] flex items-center bg-[#080c14] relative overflow-hidden px-4 sm:px-6 py-12">
 
-    <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+    <!-- Subtle Radial Glow Background -->
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none"></div>
+
+    <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
 
         <!-- LEFT CONTENT -->
         <div>
-            <h1 class="text-4xl sm:text-5xl font-bold text-dorado-900 leading-tight mb-6">
-                Your AI Study Companion
-                <span class="text-dorado-600 block">
-                    Built Around Your Notes
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-6">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                <span>Next-Gen Academic Document Intelligence</span>
+            </div>
+
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.15] tracking-tight mb-6">
+                Your AI Study Studio
+                <span class="block bg-gradient-to-r from-indigo-400 via-indigo-300 to-violet-400 bg-clip-text text-transparent">
+                    Built Around Your Notes.
                 </span>
             </h1>
 
-            <p class="text-dorado-600 text-lg mb-8 leading-relaxed">
-                Upload your subject documents. Ask questions. 
-                Get answers grounded in your own study material.
-                AskMyNotes helps you revise smarter, not harder.
+            <p class="text-slate-400 text-base sm:text-lg mb-8 leading-relaxed max-w-xl">
+                Upload your syllabus documents (PDF, DOCX, PPTX, TXT). Ask complex questions, generate 3D flashcards, drill with interactive practice quizzes, and get verifiable answers grounded in your notes.
             </p>
 
-            <div class="flex gap-4">
+            <div class="flex flex-wrap gap-4">
                 <a href="/register"
-                   class="px-6 py-3 rounded-xl bg-dorado-700 text-white font-medium
-                          hover:bg-dorado-800 transition shadow-md">
-                    Get Started
+                   class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2 text-sm">
+                    <span>Get Started Free</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
                 </a>
 
                 <a href="/login"
-                   class="px-6 py-3 rounded-xl border border-dorado-300 text-dorado-700
-                          hover:bg-dorado-100 transition">
-                    Sign In
+                   class="px-6 py-3.5 rounded-xl border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800 transition-all font-semibold text-sm">
+                    Sign In to Studio
                 </a>
+            </div>
+
+            <!-- Features Highlights Microbar -->
+            <div class="mt-12 pt-8 border-t border-slate-800/80 flex flex-wrap items-center gap-6 text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                    <span>Strict Grounded Provenance</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-indigo-400"></i>
+                    <span>~500 t/s Turbo Inference</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-violet-400"></i>
+                    <span>3D Flip Study Decks</span>
+                </div>
             </div>
         </div>
 
         <!-- RIGHT VISUAL MOCK -->
         <div class="relative">
 
-            <div class="bg-white rounded-2xl shadow-xl border border-dorado-200 p-6">
-                <div class="mb-4 text-dorado-700 font-semibold">
-                    Cloud Computing
+            <div class="bg-slate-900/90 rounded-2xl shadow-2xl border border-slate-800 p-6 backdrop-blur-xl relative">
+                <!-- Terminal Header Bar -->
+                <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+                        <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+                        <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+                        <span class="text-xs font-mono text-slate-400 ml-2 font-medium">Operating_Systems_Lecture_04.pdf</span>
+                    </div>
+                    <span class="text-[10px] font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                        Grounded AI
+                    </span>
                 </div>
 
-                <div class="bg-dorado-50 rounded-lg p-4 text-sm text-dorado-700 mb-3">
-                    <strong>You:</strong> What is virtualization?
+                <!-- User Balloon Mock -->
+                <div class="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl rounded-tr-xs p-4 text-xs sm:text-sm mb-4 shadow-md shadow-indigo-500/15 max-w-[85%] ml-auto">
+                    <p class="font-medium">What is virtual memory and how does the translation lookaside buffer (TLB) accelerate lookups?</p>
                 </div>
 
-                <div class="bg-dorado-100 rounded-lg p-4 text-sm text-dorado-800">
-                    <strong>AskMyNotes:</strong> Virtualization allows multiple operating 
-                    systems to run on a single physical machine using hypervisors.
+                <!-- AI Response Mock -->
+                <div class="bg-[#0b0f19] rounded-2xl rounded-tl-xs p-5 text-xs sm:text-sm border border-slate-800 text-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-md bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                            <span class="font-bold text-white text-xs">AskMyNotes AI</span>
+                        </div>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                            Confidence: High
+                        </span>
+                    </div>
+                    
+                    <p class="text-slate-300 leading-relaxed text-xs sm:text-sm">
+                        Virtual memory provides process isolation by mapping virtual memory addresses to physical RAM frames. The <strong>Translation Lookaside Buffer (TLB)</strong> acts as an on-chip associative cache for recent virtual-to-physical address mappings, avoiding costly multi-level page table traversals in memory.
+                    </p>
+
+                    <!-- Citations Pill Mock -->
+                    <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-2">
+                        <span class="text-[10px] font-mono uppercase text-slate-500 font-bold">Citation:</span>
+                        <span class="inline-flex items-center gap-1 text-[11px] font-mono bg-slate-800 text-indigo-300 px-2 py-0.5 rounded-md border border-slate-700">
+                            <i class="fa-regular fa-file-pdf text-rose-400 text-[10px]"></i>
+                            <span>OS_Module_2.pdf #Chunk4</span>
+                        </span>
+                    </div>
                 </div>
             </div>
 
             <!-- Floating Badge -->
-            <div class="absolute -top-4 -right-4 bg-dorado-700 text-white px-4 py-2 rounded-xl shadow-md text-sm">
-                AI Powered
+            <div class="absolute -top-3 -right-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-1.5 rounded-xl shadow-lg shadow-indigo-500/30 text-xs font-bold border border-indigo-400/40">
+                ✨ Learning Studio 2.0
             </div>
 
         </div>

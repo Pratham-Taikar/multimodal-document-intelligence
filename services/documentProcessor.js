@@ -1,4 +1,6 @@
 const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
+const officeParser = require('officeparser');
 
 /**
  * Extract text from PDF buffer
@@ -13,6 +15,28 @@ async function extractTextFromPDF(buffer) {
  */
 function extractTextFromTXT(buffer) {
   return buffer.toString('utf-8');
+}
+
+/**
+ * Extract text from DOC/DOCX buffer
+ */
+async function extractTextFromDOCX(buffer) {
+  try {
+    const result = await mammoth.extractRawText({ buffer });
+    if (result && result.value && result.value.trim().length > 0) {
+      return result.value;
+    }
+  } catch (err) {
+    console.warn('Mammoth extraction fallback:', err.message);
+  }
+  return await officeParser.parseOfficeAsync(buffer);
+}
+
+/**
+ * Extract text from PPT/PPTX buffer
+ */
+async function extractTextFromPPTX(buffer) {
+  return await officeParser.parseOfficeAsync(buffer);
 }
 
 /**
@@ -43,5 +67,7 @@ function chunkText(text) {
 module.exports = {
   extractTextFromPDF,
   extractTextFromTXT,
+  extractTextFromDOCX,
+  extractTextFromPPTX,
   chunkText
 };

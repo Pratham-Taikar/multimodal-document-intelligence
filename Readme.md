@@ -6,25 +6,26 @@ An AI-powered document intelligence and study notes assistant. Upload PDFs and n
 
 ## 🚀 Features
 
-- **Multi-Provider AI Architecture**:
-  - **Ollama (Local & Offline)**: Zero rate limits, runs 100% offline on standard PCs.
-  - **MiniMax API**: High-quality cloud model compatible with OpenAI standard chat formats.
-  - **OpenRouter**: Cloud aggregator fallback supporting free and premium models.
+- **Multi-Provider Cascading AI Architecture**:
+  - **Google Gemini (Multi-Key Auto-Rotation)**: High-intelligence responses with seamless failover between multiple keys when rate limits (429) hit.
+  - **Groq Cloud API (Free & Blazing Fast)**: Ultra-fast ~500 tokens/sec LPU inference (Llama 3.1 8B Instant) that automatically takes over if Gemini is exhausted.
+  - **Ollama (Optimized for Low-End PC & Offline)**: Zero rate limits, offline safety net running lightweight `llama3.2:1b` (runs smoothly on CPU with ~1.3GB RAM).
+  - **OpenRouter Cloud**: Additional free model cascade (`google/gemini-2.0-flash-exp:free`, `meta-llama/llama-3.3-70b-instruct:free`).
 - **RAG Document Search**: Intelligent semantic and chunk-based retrieval across study materials.
 - **MCQ & Practice Quiz Generation**: Rigorous validation, duplicate prevention, and automatic recovery.
 - **Secure Authentication**: Express session authentication with MongoDB storage.
 
 ---
 
-## 💻 Recommended Local Models for PC (Ollama)
+## 💻 Recommended Local Models for Low-End PC (Ollama)
 
-You can run these fast, highly optimized models on standard consumer hardware (8GB+ RAM, with or without a dedicated GPU):
+If you are offline or choose local execution on a standard consumer laptop or PC without a dedicated GPU:
 
-| Model | Command | Best For |
-| :--- | :--- | :--- |
-| **Llama 3.2 (3B)** *(Recommended)* | `ollama run llama3.2` | Fast, lightweight, low RAM footprint (~2.5GB VRAM/RAM). Great for notes & MCQs. |
-| **Qwen 2.5 (3B / 7B)** | `ollama run qwen2.5:3b` | Excellent reasoning and multilingual document understanding. |
-| **Mistral (7B)** | `ollama run mistral` | High fidelity structured outputs. |
+| Model | Command | RAM Footprint | Best For |
+| :--- | :--- | :--- | :--- |
+| **Llama 3.2 (1B)** *(Recommended for Low-End PC)* | `ollama run llama3.2:1b` | ~1.3 GB | **Fastest on CPU**, minimal memory usage, zero PC freeze. |
+| **Qwen 2.5 (1.5B)** | `ollama run qwen2.5:1.5b` | ~1.8 GB | Great reasoning & multilingual speed on low RAM. |
+| **Llama 3.2 (3B)** | `ollama run llama3.2` | ~2.5 GB | Good balance if you have 8GB+ RAM. |
 
 ---
 
@@ -33,7 +34,8 @@ You can run these fast, highly optimized models on standard consumer hardware (8
 ### 1. Prerequisites
 - [Node.js](https://nodejs.org/) (v18+)
 - [MongoDB](https://www.mongodb.com/) (Local or Atlas)
-- [Ollama](https://ollama.com/) (Optional for 100% offline AI)
+- [Groq API Key](https://console.groq.com/keys) (Free & instant) or [Gemini API Key](https://aistudio.google.com/app/apikey)
+- [Ollama](https://ollama.com/) (Optional for 100% offline fallback)
 
 ### 2. Install Dependencies
 ```bash
@@ -48,17 +50,13 @@ cp .env.example .env
 
 Configure your `.env`:
 
-#### Option A: Offline AI with Ollama (Zero API Costs & No Rate Limits)
-1. Install [Ollama](https://ollama.com/) and run:
-   ```bash
-   ollama run llama3.2
-   ```
-2. Set in `.env`:
-   ```env
-   AI_PROVIDER_ORDER=ollama
-   OLLAMA_BASE_URL=http://localhost:11434/v1
-   OLLAMA_MODEL=llama3.2
-   ```
+#### Recommended: Multi-Tier Cascade (Gemini + Groq + Ollama)
+```env
+AI_PROVIDER_ORDER=gemini,groq,openrouter,ollama
+GEMINI_API_KEY=your_gemini_key_1,your_gemini_key_2
+GROQ_API_KEY=your_groq_api_key
+OLLAMA_MODEL=llama3.2:1b
+```
 
 #### Option B: MiniMax AI
 1. Set in `.env`:

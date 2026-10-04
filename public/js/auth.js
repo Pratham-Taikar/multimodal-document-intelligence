@@ -2,22 +2,22 @@ const signInTab = document.getElementById("signInTab");
 const signUpTab = document.getElementById("signUpTab");
 const confirmPasswordField = document.getElementById("confirmPasswordField");
 const form = document.getElementById("authForm");
-const submitBtn = form.querySelector("button");
+const submitBtn = form.querySelector("button[type='submit']");
 
 let isSignup = false;
 
-/* ---------------- Toggle Logic ---------------- */
+/* ---------------- Modern Tab Toggle Logic ---------------- */
 
 function switchToSignIn() {
     isSignup = false;
     confirmPasswordField.classList.add("hidden");
     submitBtn.innerText = "Sign In";
 
-    signInTab.classList.add("text-dorado-800", "border-dorado-600");
-    signInTab.classList.remove("text-dorado-500", "border-transparent");
-
-    signUpTab.classList.remove("text-dorado-800", "border-dorado-600");
-    signUpTab.classList.add("text-dorado-500", "border-transparent");
+    // Active Sign In style (Modern Indigo Accent)
+    signInTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all shadow-sm";
+    
+    // Inactive Sign Up style
+    signUpTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all bg-transparent";
 }
 
 function switchToSignUp() {
@@ -25,15 +25,22 @@ function switchToSignUp() {
     confirmPasswordField.classList.remove("hidden");
     submitBtn.innerText = "Sign Up";
 
-    signUpTab.classList.add("text-dorado-800", "border-dorado-600");
-    signUpTab.classList.remove("text-dorado-500", "border-transparent");
-
-    signInTab.classList.remove("text-dorado-800", "border-dorado-600");
-    signInTab.classList.add("text-dorado-500", "border-transparent");
+    // Active Sign Up style (Modern Indigo Accent)
+    signUpTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all shadow-sm";
+    
+    // Inactive Sign In style
+    signInTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all bg-transparent";
 }
 
 signInTab.addEventListener("click", switchToSignIn);
 signUpTab.addEventListener("click", switchToSignUp);
+
+// Auto-switch to Sign Up if accessed via /register
+if (window.location.pathname.includes("register")) {
+    switchToSignUp();
+} else {
+    switchToSignIn();
+}
 
 /* ---------------- Submit Logic ---------------- */
 
@@ -58,7 +65,6 @@ form.addEventListener("submit", async function (e) {
         submitBtn.disabled = true;
         submitBtn.innerText = "Processing...";
 
-        // FIXED: Changed from /auth/register to /register and /auth/login to /login
         const url = isSignup ? "/register" : "/login";
 
         const response = await axios.post(url, {
@@ -71,16 +77,14 @@ form.addEventListener("submit", async function (e) {
         // Redirect after success
         setTimeout(() => {
             window.location.href = "/dashboard";
-        }, 1000);
+        }, 800);
 
     } catch (error) {
-
         if (error.response && error.response.data.message) {
             showToast(error.response.data.message, "error");
         } else {
-            showToast("Something went wrong", "error");
+            showToast("Authentication failed", "error");
         }
-
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = isSignup ? "Sign Up" : "Sign In";
