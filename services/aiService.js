@@ -441,7 +441,8 @@ async function generateText(prompt, options = {}) {
   }
 
   const attempted = failures.map(failure => `${failure.provider}: ${failure.status || failure.code || 'transient failure'}`).join('; ');
-  throw new Error(`All configured AI providers failed. ${attempted || 'No provider API keys are configured.'}`);
+  const guidance = 'Please add a free Gemini or Groq API key in your Dashboard (or .env), or start Ollama locally (ollama run llama3.2:1b).';
+  throw new Error(`All AI providers failed (${attempted || 'no active keys'}). ${guidance}`);
 }
 
 function setProviderImplementations(implementations) {
