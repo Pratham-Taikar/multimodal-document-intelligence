@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+    --color-dorado-50: #fbf9f8;
+    --color-dorado-100: #f6f4f3;
+    --color-dorado-200: #e9e2e4;
+    --color-dorado-300: #d9ced0;
+    --color-dorado-400: #ae989a;
+    --color-dorado-500: #7f6567;
+    --color-dorado-600: #6b5554;
+    --color-dorado-700: #493737;
+    --color-dorado-800: #2c2125;
+    --color-dorado-900: #1f1416;
+    --color-dorado-950: #0e0709;
+}

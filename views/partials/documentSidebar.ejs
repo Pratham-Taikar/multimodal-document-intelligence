@@ -1,0 +1,33 @@
+<!-- Document Overlay -->
+<div id="doc-overlay"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-40 flex items-center justify-center"
+     onclick="closeDocSidebar()">
+
+    <!-- Modal Box -->
+    <div id="doc-sidebar"
+         class="bg-white w-[90%] sm:w-[420px] max-h-[80vh]
+                rounded-xl shadow-2xl border border-dorado-200
+                transform scale-95 opacity-0
+                transition-all duration-300
+                flex flex-col"
+         onclick="event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="p-4 border-b border-dorado-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-dorado-800">
+                Uploaded Documents
+            </h2>
+            <button onclick="closeDocSidebar()"
+                    class="text-dorado-400 hover:text-dorado-700">
+                ✕
+            </button>
+        </div>
+
+        <!-- File List -->
+        <div id="doc-list"
+             class="flex-1 overflow-y-auto p-4 space-y-3 text-sm text-dorado-700">
+            <!-- Documents injected dynamically -->
+        </div>
+
+    </div>
+</div>

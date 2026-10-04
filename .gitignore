@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -60,3 +61,11 @@ pgdata/
 *.swo
 .DS_Store
 Thumbs.db
+=======
+.env
+node_modules/
+uploads/*
+*.log
+.DS_Store
+package-lock.json
+>>>>>>> 167f235814ebe66d278f7ca6c34f5c4b412d20eb

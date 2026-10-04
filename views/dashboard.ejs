@@ -1,0 +1,340 @@
+<%- include('partials/header', { title: "Dashboard" }) %>
+
+<body class="bg-[#080c14] text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <%- include('partials/navbar') %>
+
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-1">
+        
+        <!-- Header Banner with Stats -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between pb-8 mb-8 border-b border-slate-800/80 gap-4">
+            <div>
+                <div class="flex items-center gap-2 mb-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs font-mono uppercase tracking-wider text-indigo-400 font-semibold">Workspace Active</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Academic Knowledge Hub</h1>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">Manage your subjects, configure multi-key AI engines, and synthesize learning drills.</p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2.5 shadow-sm text-center">
+                    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Subjects</div>
+                    <div class="text-lg font-bold text-white font-mono"><%= subjects.length %><span class="text-slate-500 text-xs">/3</span></div>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2.5 shadow-sm text-center">
+                    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Total Notes</div>
+                    <div class="text-lg font-bold text-indigo-400 font-mono">
+                        <%= subjects.reduce((acc, s) => acc + (s.notes ? s.notes.length : 0), 0) %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Engine Configuration Section -->
+        <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-700/80 rounded-2xl shadow-xl p-5 sm:p-7 mb-8 backdrop-blur-md transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-white">AI Engine & Multi-Key Cascade</h2>
+                        <p class="text-xs text-slate-400">Gemini Key Rotation &bull; Groq LPU Turbo Fallback (~500 t/s) &bull; Ollama CPU Mode</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <% if (user && user.customApiKey) { %>
+                        <span class="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2.5 py-1 rounded-full font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            Gemini Multi-Key Active
+                        </span>
+                    <% } else if (hasEnvGeminiKey) { %>
+                        <span class="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs px-2.5 py-1 rounded-full font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                            System Gemini Active
+                        </span>
+                    <% } else { %>
+                        <span class="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2.5 py-1 rounded-full font-medium">
+                            Gemini Key Optional
+                        </span>
+                    <% } %>
+
+                    <% if (user && user.customGroqApiKey) { %>
+                        <span class="inline-flex items-center gap-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs px-2.5 py-1 rounded-full font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                            Groq Turbo (~500 t/s)
+                        </span>
+                    <% } %>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 mb-4">
+                Paste your keys below. Free Gemini keys support multi-key rotation (comma-separated).
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-indigo-400 hover:underline font-medium ml-1">Get free Gemini key &rarr;</a>
+                &bull;
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="text-indigo-400 hover:underline font-medium ml-1">Get free Groq key (~500 t/s) &rarr;</a>
+            </p>
+            
+            <form id="saveApiKeyForm" class="space-y-3">
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input 
+                            type="password" 
+                            id="userApiKey" 
+                            name="apiKey"
+                            value="<%= (user && user.customApiKey) ? user.customApiKey : '' %>"
+                            placeholder="Google Gemini API Key(s) - e.g. AIzaSy... (comma-separated for multi-key rotation)" 
+                            class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono transition-all"
+                        >
+                    </div>
+                    <button 
+                        type="button" 
+                        id="toggleKeyVisibility" 
+                        class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex-shrink-0"
+                    >
+                        Show
+                    </button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="relative flex-1">
+                        <input 
+                            type="password" 
+                            id="userGroqApiKey" 
+                            name="groqApiKey"
+                            value="<%= (user && user.customGroqApiKey) ? user.customGroqApiKey : '' %>"
+                            placeholder="Groq Cloud API Key (Optional) - e.g. gsk_... (Instant ~500 t/s free fallback)" 
+                            class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono transition-all"
+                        >
+                    </div>
+                    <div class="flex gap-2">
+                        <button 
+                            type="button" 
+                            id="toggleGroqKeyVisibility" 
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex-shrink-0"
+                        >
+                            Show
+                        </button>
+                        <button 
+                            type="submit" 
+                            class="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white px-5 py-2.5 rounded-xl font-semibold text-xs transition-all shadow-md shadow-indigo-500/20 flex-shrink-0 flex items-center gap-1.5"
+                        >
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span>Save Keys</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Create Subject Section -->
+        <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-700/80 rounded-2xl shadow-xl p-5 sm:p-7 mb-8 backdrop-blur-md transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                <div>
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-folder-plus text-indigo-400"></i>
+                        <span>Create New Study Subject</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Upload syllabus notes, lecture slides, and test materials.</p>
+                </div>
+                <span class="text-xs font-mono text-slate-400 bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-full self-start sm:self-auto font-semibold">
+                    Capacity: <%= subjects.length %>/3
+                </span>
+            </div>
+            
+            <form id="createSubjectForm" class="flex flex-col sm:flex-row gap-3">
+                <input 
+                    type="text" 
+                    id="subjectName" 
+                    name="name"
+                    placeholder="Enter subject name (e.g. Distributed Operating Systems, Advanced Calculus)" 
+                    class="flex-1 bg-[#0b0f19] border border-slate-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                    required
+                    <%= subjects.length >= 3 ? 'disabled' : '' %>
+                >
+                <button 
+                    type="submit" 
+                    class="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 <%= subjects.length >= 3 ? 'opacity-50 cursor-not-allowed' : '' %>"
+                    <%= subjects.length >= 3 ? 'disabled' : '' %>
+                >
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Create Subject</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Subjects Grid -->
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                <i class="fa-solid fa-books text-indigo-400"></i>
+                <span>Your Subjects</span>
+            </h2>
+            <span class="text-xs text-slate-500"><%= subjects.length %> active workspaces</span>
+        </div>
+
+        <% if (subjects.length === 0) { %>
+            <div class="bg-slate-900/40 border border-slate-800 border-dashed rounded-2xl p-12 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-2xl mx-auto mb-4 border border-indigo-500/20">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <h3 class="text-base font-bold text-white">No Subjects Created Yet</h3>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-5">Create your first subject above to upload PDF, DOCX, or PPTX lecture notes.</p>
+            </div>
+        <% } else { %>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <% subjects.forEach(subject => { %>
+                    <div class="bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between group">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/25 text-indigo-400 flex items-center justify-center text-base group-hover:scale-105 transition-transform">
+                                        <i class="fa-solid fa-book-bookmark"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-base font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-1"><%= subject.name %></h3>
+                                        <span class="text-[11px] text-slate-400 font-medium">
+                                            <%= subject.notes.length %> document(s) uploaded
+                                        </span>
+                                    </div>
+                                </div>
+                                <button onclick="deleteSubject('<%= subject._id %>')" 
+                                        class="text-slate-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors" title="Delete Subject">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="my-4 py-2 border-t border-b border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>
+                                <span>RAG Verified: Grounded study active</span>
+                            </div>
+                        </div>
+                        
+                        <a href="/chat/<%= subject._id %>" 
+                           class="block text-center bg-indigo-600/20 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-violet-600 text-indigo-300 hover:text-white border border-indigo-500/30 hover:border-transparent px-4 py-2.5 rounded-xl transition-all duration-200 font-semibold text-xs shadow-sm flex items-center justify-center gap-2">
+                            <span>Open Learning Studio</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+
+    </div>
+
+    <%- include('partials/toast') %> 
+    <%- include('partials/footer') %> 
+
+    <script>
+        // Toggle Key Visibility
+        const keyInput = document.getElementById('userApiKey');
+        const toggleBtn = document.getElementById('toggleKeyVisibility');
+        if (toggleBtn && keyInput) {
+            toggleBtn.addEventListener('click', () => {
+                if (keyInput.type === 'password') {
+                    keyInput.type = 'text';
+                    toggleBtn.innerText = 'Hide';
+                } else {
+                    keyInput.type = 'password';
+                    toggleBtn.innerText = 'Show';
+                }
+            });
+        }
+
+        const groqKeyInput = document.getElementById('userGroqApiKey');
+        const toggleGroqBtn = document.getElementById('toggleGroqKeyVisibility');
+        if (toggleGroqBtn && groqKeyInput) {
+            toggleGroqBtn.addEventListener('click', () => {
+                if (groqKeyInput.type === 'password') {
+                    groqKeyInput.type = 'text';
+                    toggleGroqBtn.innerText = 'Hide';
+                } else {
+                    groqKeyInput.type = 'password';
+                    toggleGroqBtn.innerText = 'Show';
+                }
+            });
+        }
+
+        // Save API Keys
+        document.getElementById('saveApiKeyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const apiKey = document.getElementById('userApiKey').value.trim();
+            const groqApiKey = document.getElementById('userGroqApiKey').value.trim();
+            try {
+                const response = await fetch('/api/user/key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey, groqApiKey })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast('API keys saved successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(data.message || 'Error saving API key', 'error');
+                }
+            } catch (err) {
+                showToast('Network error saving API key', 'error');
+            }
+        });
+
+        // Create Subject
+        document.getElementById('createSubjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('subjectName').value.trim();
+            
+            if (!name) {
+                showToast('Please enter a subject name', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/subjects/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(data.message || 'Subject created successfully', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(data.message || 'Error creating subject', 'error');
+                }
+            } catch (error) {
+                showToast('Error creating subject', 'error');
+                console.error(error);
+            }
+        });
+
+        // Delete Subject
+        async function deleteSubject(id) {
+            if (!confirm('Are you sure you want to delete this subject? All documents will be lost.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/subjects/${id}`, { 
+                    method: 'DELETE' 
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(data.message || 'Subject deleted', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(data.message || 'Error deleting subject', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting subject', 'error');
+                console.error(error);
+            }
+        }
+    </script>
+
+</body>
+</html>

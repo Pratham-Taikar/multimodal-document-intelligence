@@ -1,0 +1,43 @@
+<%- include('partials/header', { title: "404 - Page Not Found • AskMyNotes" }) %>
+
+<body class="bg-[#080c14] text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <%- include('partials/navbar') %>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center px-6 relative overflow-hidden py-16">
+
+        <div class="max-w-xl text-center relative z-10">
+
+            <!-- 404 Number -->
+            <div class="relative inline-block mb-6">
+                <h1 class="text-8xl md:text-9xl font-extrabold text-slate-800 opacity-40 font-mono select-none">
+                    404
+                </h1>
+                <h2 class="absolute inset-0 flex items-center justify-center text-2xl md:text-3xl font-bold text-white tracking-tight">
+                    Page Not Found
+                </h2>
+            </div>
+
+            <!-- Description -->
+            <p class="text-slate-400 text-sm md:text-base leading-relaxed mb-8">
+                The document workspace or studio route you're looking for cannot be found. It may have moved or been deleted.
+            </p>
+
+            <!-- Buttons -->
+            <div class="flex justify-center">
+                <a href="/"
+                   class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/25 flex items-center gap-2">
+                    <i class="fa-solid fa-house text-xs"></i>
+                    <span>Return to Home</span>
+                </a>
+            </div>
+
+        </div>
+
+    </main>
+
+    <%- include('partials/footer') %>
+
+</body>
+</html>
