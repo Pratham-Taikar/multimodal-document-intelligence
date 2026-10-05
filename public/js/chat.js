@@ -159,6 +159,9 @@ function switchTab(tabName) {
     if (tabName === 'chat' && chatInput) {
         setTimeout(() => chatInput.focus(), 50);
     }
+    if (tabName === 'research') {
+        loadResearchPaperInfo();
+    }
 }
 
 function toggleDocSidebar() {
@@ -499,6 +502,9 @@ function renderMarkdown(text) {
 
     let cleaned = String(text);
 
+    // 0. Remove trailing conversational filler & meta-talk
+    cleaned = cleaned.replace(/(?:---\s*)?(?:Would you like to|Let me know if you would like|Feel free to ask if you want|Do you want me to|I hope this helps)[\s\S]*$/i, '').trim();
+
     // 1. Normalize squashed separators and headings
     cleaned = cleaned.replace(/---\s*(#{1,6}\s+)/g, '\n\n---\n\n$1');
     cleaned = cleaned.replace(/([^\n])\s*(#{1,6}\s+)/g, '$1\n\n$2');
@@ -510,7 +516,15 @@ function renderMarkdown(text) {
     // 3. Clean raw redundant hashtags
     cleaned = cleaned.replace(/#{4,}/g, '###');
 
-    // 4. Handle LaTeX equations cleanly ($$math$$ and $math$)
+    // 4. Clean messy raw LaTeX math artifacts
+    // Replace \text{...} with clean text
+    cleaned = cleaned.replace(/\\text\{([^{}]+)\}/g, '$1');
+    // Replace \frac{a}{b} with a / b
+    cleaned = cleaned.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '$1 / $2');
+    // Replace \times with ×, \ge with ≥, \le with ≤
+    cleaned = cleaned.replace(/\\times/g, '×').replace(/\\ge\b/g, '≥').replace(/\\le\b/g, '≤');
+
+    // 5. Handle LaTeX equations cleanly ($$math$$ and $math$)
     cleaned = cleaned.replace(/\$\$([\s\S]+?)\$\$/g, '<div class="my-2.5 p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl font-mono text-xs text-indigo-300 overflow-x-auto text-center shadow-inner">$1</div>');
     cleaned = cleaned.replace(/\$([^\$\n]+?)\$/g, '<code class="font-mono text-xs text-indigo-300 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/60">$1</code>');
 
@@ -529,11 +543,15 @@ function renderMarkdown(text) {
         html = escapeHtml(cleaned).replace(/\n/g, '<br>');
     }
 
-    // 5. Enhance Diagram callouts into modern dark cards
+    // 6. Enhance Diagram callouts into modern dark cards ONLY if they contain real diagrams (filter out disclaimers)
+    const isDisclaimer = (txt) => /no visual images|no diagrams? (?:were|are)? (?:embedded|present|found)|not embedded|not shown|while specific diagrams/i.test(txt);
+
     html = html.replace(/<p><strong>📊 Diagram Reference:<\/strong>([\s\S]*?)<\/p>/gi, function(match, content) {
+        if (isDisclaimer(content)) return '';
         return `<div class="diagram-callout"><div class="diagram-callout-header"><i class="fa-solid fa-project-diagram text-indigo-400"></i> Grounded Diagram Citation</div><div class="text-xs text-indigo-200 font-semibold">${content}</div></div>`;
     });
     html = html.replace(/<p><strong>📊 Diagram Analysis &amp; Explanation:<\/strong>([\s\S]*?)<\/p>/gi, function(match, content) {
+        if (isDisclaimer(content)) return '';
         return `<div class="diagram-callout"><div class="diagram-callout-header"><i class="fa-solid fa-chart-pie text-violet-400"></i> Diagram Visual Structure &amp; Breakdown</div><div class="text-xs text-slate-300 leading-relaxed">${content}</div></div>`;
     });
 
@@ -1257,14 +1275,75 @@ async function requestResearch(mode = 'breakdown') {
     } catch (err) {
         box.innerHTML = `
             <div class="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-center text-red-300 text-xs">
-                ${err.response?.data?.message || "Failed to analyze research paper. Please ensure documents are uploaded."}
+                ${err.response?.data?.message || "Failed to analyze research paper. Please upload a research paper above."}
             </div>
         `;
+    }
+}
+
+// ---------------- Dedicated Research Paper Upload & Info ----------------
+async function handleResearchPaperUpload(file) {
+    if (!file) return;
+
+    const btn = document.getElementById("btn-upload-research-paper");
+    const btnText = document.getElementById("btn-upload-research-text");
+    const nameEl = document.getElementById("research-paper-name");
+
+    const formData = new FormData();
+    formData.append("researchPaper", file);
+
+    try {
+        if (btn) btn.disabled = true;
+        if (btnText) btnText.innerText = "Processing Paper...";
+        showToast("Uploading dedicated research paper...", "info");
+
+        const res = await axios.post(`/api/study/research/upload/${subjectId}`, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        showToast("Research paper uploaded successfully!", "success");
+        if (nameEl) {
+            nameEl.innerText = file.name;
+            nameEl.className = "font-mono text-xs text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 truncate max-w-[260px] sm:max-w-md";
+        }
+        if (btnText) btnText.innerText = "Replace Dedicated Paper";
+
+        // Trigger paper breakdown automatically after upload
+        requestResearch('breakdown');
+    } catch (err) {
+        showToast(err.response?.data?.message || "Failed to upload research paper.", "error");
+    } finally {
+        if (btn) btn.disabled = false;
+        const input = document.getElementById("research-paper-file-input");
+        if (input) input.value = "";
+    }
+}
+
+async function loadResearchPaperInfo() {
+    const nameEl = document.getElementById("research-paper-name");
+    const btnText = document.getElementById("btn-upload-research-text");
+    if (!nameEl) return;
+
+    try {
+        const res = await axios.get(`/api/study/research/paper/${subjectId}`);
+        const paper = res.data.paper;
+        if (paper && paper.name) {
+            nameEl.innerText = paper.name;
+            nameEl.className = "font-mono text-xs text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 truncate max-w-[260px] sm:max-w-md";
+            if (btnText) btnText.innerText = "Replace Dedicated Paper";
+        } else {
+            nameEl.innerText = "No separate paper uploaded";
+            nameEl.className = "font-mono text-xs text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60 truncate max-w-[260px] sm:max-w-md";
+            if (btnText) btnText.innerText = "Upload Dedicated Paper";
+        }
+    } catch (e) {
+        console.warn("Could not fetch research paper info:", e);
     }
 }
 
 // ---------------- Initialize Studio ----------------
 document.addEventListener("DOMContentLoaded", () => {
     loadDocuments();
+    loadResearchPaperInfo();
     renderMessages();
 });

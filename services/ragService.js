@@ -50,11 +50,17 @@ function formatCleanAnswer(text) {
 
   let formatted = String(text).trim();
 
+  // Strip conversational follow-ups and meta-filler at the end
+  formatted = formatted.replace(/(?:---\s*)?(?:Would you like to|Let me know if|Feel free to|Hope this helps|Do you want to)[\s\S]*$/i, '').trim();
+
+  // Strip diagram disclaimer blocks where model says no visual images exist
+  formatted = formatted.replace(/\*\*📊 Diagram (?:Analysis & Explanation|Reference)[^\n]*\*\*[:\s]*\(?Note:?\s*(?:While specific diagrams|No visual images|No diagrams|No figures|Not embedded|Not shown)[\s\S]*?(?=\n\n\*\*|\n\n- |\n\n[0-9]+\. |$)/gi, '').trim();
+
   // If text has inline markdown headings without newlines (e.g., "word --- ### 2. Heading"), fix spacing
   formatted = formatted.replace(/---\s*(#{1,4}\s+)/g, '\n\n---\n\n$1');
   formatted = formatted.replace(/([^\n])\s*(#{1,4}\s+)/g, '$1\n\n$2');
 
-  // Convert raw ### headings into clean bold headings with proper spacing if requested
+  // Convert raw ### headings into clean bold headings with proper spacing
   formatted = formatted.replace(/^#{1,4}\s+(.+)$/gm, '\n**$1**\n');
 
   // Ensure bullet points have clean newlines
@@ -100,17 +106,27 @@ FORMATTING & VISUAL PRESENTATION RULES:
    - Use clean, distinct paragraphs with proper line spacing.
    - Use clean bullet points ("- ") for lists, mechanisms, and key takeaways.
    - Bold key technical terms when first introduced.
-   - DO NOT output messy raw hashtag symbols (e.g. avoid raw inline "###", "##"). Use clean bold headings like "**1. Topic Title**".
-   - If mathematical formulas appear, write them clearly (e.g. 2^r >= m + r + 1) without broken delimiters.
+   - DO NOT output messy raw hashtag symbols (avoid raw inline "###", "##"). Use clean bold headings like "**1. Topic Title**".
+   - Mathematical formulas: write formulas in natural, clean notation (e.g. \`Bit Duration = 1 / Data Rate\`) or standard math. Avoid excessive nested LaTeX clutter like \\text{...}.
 
-DIAGRAM & VISUAL GROUNDING RULE:
-- If any diagram, figure, flowchart, architecture, or visual illustration is mentioned or depicted in the source notes:
-  1. Specifically cite it: "**📊 Diagram Reference:** [Document Name, Figure/Diagram Name or Section Number]".
-  2. Provide a dedicated section:
+DIAGRAM GROUNDING RULES (STRICT):
+- ONLY include a diagram citation and analysis IF a concrete diagram, architecture diagram, flowchart, or figure is EXPLICITLY present and named in the provided document context.
+- If NO diagram or figure is in the context:
+  * DO NOT mention diagrams, visuals, or figures at all.
+  * DO NOT create any "📊 Diagram Reference" or "📊 Diagram Analysis" section.
+  * NEVER write disclaimers such as "no visual images were embedded", "no diagrams found", "diagrams were described but not shown", or similar notes.
+  * Completely omit any diagram sections and explain the concepts directly.
+- When a diagram IS explicitly present and named:
+  1. Cite it: "**📊 Diagram Reference:** [Document Name, Figure/Diagram Name or Section Number]".
+  2. Provide a separate breakdown:
      "**📊 Diagram Analysis & Explanation:**"
      - **Visual Structure & Components:** Describe the entities, blocks, and symbols shown.
      - **Step-by-Step Flow:** Explain how data, control, or packets move through the diagram.
-     - **Takeaway:** Why this diagram is important to understand the concept.
+
+STRICT NO-FILLER & NO-META-TALK RULE:
+- Conclude your answer directly after explaining the concepts.
+- NEVER include closing pleasantries, unsolicited follow-up offers, or conversational questions (e.g. NEVER write "Would you like to go over a specific example...?", "Let me know if you need more details", "I hope this helps").
+- Do NOT output any conversational sign-off.
 
 CONVERSATION HISTORY:\n`;
 

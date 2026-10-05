@@ -15,6 +15,7 @@ const documentChunkSchema = new mongoose.Schema({
   originalName: { type: String, required: true },
   chunkIndex: { type: Number, required: true },
   content: { type: String, required: true },
+  isResearchPaper: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 

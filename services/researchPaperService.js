@@ -8,7 +8,11 @@ const { generateText } = require('./aiService');
  */
 async function analyzeResearchPaper(subjectId, userId, mode = 'breakdown') {
   try {
-    const allChunks = await DocumentChunk.find({ subjectId, userId }).lean();
+    // Prioritize dedicated research paper uploaded specifically in Research Studio
+    let allChunks = await DocumentChunk.find({ subjectId, userId, isResearchPaper: true }).lean();
+    if (!allChunks || allChunks.length === 0) {
+      allChunks = await DocumentChunk.find({ subjectId, userId }).lean();
+    }
     if (!allChunks || allChunks.length === 0) {
       return { error: 'No documents uploaded for this subject yet. Please upload a research paper (PDF, DOCX).' };
     }

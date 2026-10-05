@@ -364,6 +364,29 @@
                         </div>
                     </div>
 
+                    <!-- Dedicated Research Paper Upload Section -->
+                    <div class="mt-5 p-4 rounded-xl bg-[#0b0f19] border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="fa-solid fa-file-shield"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-white">Active Research Paper:</span>
+                                    <span id="research-paper-name" class="font-mono text-xs text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60 truncate max-w-[260px] sm:max-w-md">No separate paper uploaded</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Upload a dedicated research paper (PDF/DOCX) specifically for this tab. It operates separately from your general subject notes.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 self-start md:self-auto">
+                            <input type="file" id="research-paper-file-input" accept=".pdf,.docx,.txt" class="hidden" onchange="handleResearchPaperUpload(this.files[0])">
+                            <button onclick="document.getElementById('research-paper-file-input').click()" id="btn-upload-research-paper" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center gap-2 shadow-md shadow-indigo-500/20 flex-shrink-0">
+                                <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                                <span id="btn-upload-research-text">Upload Dedicated Paper</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Research Result Area -->
                     <div id="research-result-box" class="mt-6">
                         <div class="text-center py-16 text-slate-400">
