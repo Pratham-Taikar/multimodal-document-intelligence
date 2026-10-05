@@ -475,7 +475,11 @@ function renderMessages() {
         `;
     }).join('');
 
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    if (chatBox) {
+        setTimeout(() => {
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+        }, 30);
+    }
 }
 
 function formatTime(isoString) {

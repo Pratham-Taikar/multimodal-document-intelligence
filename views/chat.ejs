@@ -71,11 +71,11 @@
         </div>
     </div>
 
-    <!-- Main Workspace Container -->
-    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex gap-6 relative">
+    <!-- Main Workspace Container (Contained Responsive Height) -->
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 flex gap-6 relative min-h-0 h-[calc(100vh-8.5rem)] overflow-hidden">
 
         <!-- Left Document Notes Sidebar -->
-        <aside id="doc-sidebar-pane" class="w-80 flex-shrink-0 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl hidden lg:flex flex-col h-[calc(100vh-14rem)] sticky top-36 backdrop-blur-md">
+        <aside id="doc-sidebar-pane" class="w-80 flex-shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl hidden lg:flex flex-col h-full backdrop-blur-md overflow-hidden">
             <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <i class="fa-solid fa-folder-open text-indigo-400"></i>
@@ -107,85 +107,84 @@
         </aside>
 
         <!-- Right / Center Studio Content -->
-        <main class="flex-1 min-w-0 flex flex-col">
+        <main class="flex-1 min-w-0 flex flex-col h-full min-h-0 overflow-hidden">
 
             <!-- TAB 1: Grounded RAG Chat (Modern Dark Tech Theme) -->
-            <div id="tab-content-chat" class="studio-tab-content flex-1 flex flex-col">
+            <div id="tab-content-chat" class="studio-tab-content flex-1 flex flex-col h-full min-h-0 overflow-hidden">
                 
-                <!-- Chat Message Stream -->
-                <div id="chat-box" class="flex-1 space-y-4 pb-64 min-h-[460px]">
+                <!-- Chat Message Stream (Cleanly scrolls within container, never covered) -->
+                <div id="chat-box" class="flex-1 overflow-y-auto space-y-4 pr-2 py-2 scroll-smooth">
                     <!-- Messages will be injected dynamically -->
                 </div>
 
-                <!-- Floating Chat Dock in Dark Tech Theme -->
-                <div class="fixed bottom-4 left-0 lg:left-auto max-w-3xl w-full px-4 sm:px-6 z-40 mx-auto right-0">
+                <!-- Grounded Chat Dock (Pinned to bottom of pane, no overlap) -->
+                <div class="flex-shrink-0 pt-2 pb-1 bg-gradient-to-t from-[#080c14] via-[#080c14] to-transparent">
                     
-                    <!-- Quick Prompt Chips (Modern Tech Glow) -->
+                    <!-- Quick Prompt Chips -->
                     <div id="quick-prompt-bar" class="mb-2 flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none text-xs">
-                        <button onclick="quickPrompt('Summarize the primary concepts across these notes in bullet points')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium hover:border-indigo-500/50">
+                        <button onclick="quickPrompt('Summarize the primary concepts across these notes in bullet points')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
                             <i class="fa-solid fa-sparkles text-indigo-400 text-[10px]"></i>
                             <span>Summary of Notes</span>
                         </button>
-                        <button onclick="quickPrompt('What are the key terms, definitions, and formulas discussed?')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium hover:border-indigo-500/50">
+                        <button onclick="quickPrompt('What are the key terms, definitions, and formulas discussed?')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
                             <i class="fa-solid fa-book-bookmark text-indigo-400 text-[10px]"></i>
                             <span>Key Definitions</span>
                         </button>
-                        <button onclick="quickPrompt('Explain the core mechanisms step-by-step with practical examples')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium hover:border-indigo-500/50">
+                        <button onclick="quickPrompt('Explain the core mechanisms step-by-step with practical examples')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
                             <i class="fa-solid fa-gears text-indigo-400 text-[10px]"></i>
                             <span>Explain Mechanisms</span>
                         </button>
-                        <button onclick="quickPrompt('Generate 3 exam-style conceptual practice questions with hints')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium hover:border-indigo-500/50">
+                        <button onclick="quickPrompt('Generate 3 exam-style conceptual practice questions with hints')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
                             <i class="fa-solid fa-circle-question text-indigo-400 text-[10px]"></i>
                             <span>Practice Drill</span>
                         </button>
                     </div>
 
                     <!-- Input Bar -->
-                    <form id="chat-form" class="bg-slate-900/95 text-white rounded-2xl px-3 sm:px-4 py-2.5 shadow-2xl border border-slate-700/80 flex items-end gap-2 sm:gap-2.5 backdrop-blur-xl focus-within:border-indigo-500/60 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                    <form id="chat-form" class="bg-[#0b101b] text-white rounded-2xl px-3 sm:px-4 py-2.5 shadow-2xl border border-slate-800 hover:border-slate-700 focus-within:border-indigo-500/70 focus-within:ring-2 focus-within:ring-indigo-500/20 flex items-end gap-2 transition-all">
                         
-                        <button type="button" onclick="toggleDocSidebar()" class="w-9 h-9 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors flex-shrink-0" title="Toggle Notes Sidebar">
-                            <i class="fa-solid fa-folder-open text-sm"></i>
+                        <button type="button" onclick="toggleDocSidebar()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors flex-shrink-0" title="Toggle Notes Sidebar">
+                            <i class="fa-solid fa-folder-open text-xs"></i>
                         </button>
 
-                        <button type="button" id="voiceBtn" onclick="startVoiceRecording()" class="w-9 h-9 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors flex-shrink-0" title="Voice Input (Speech-to-Text)">
-                            <i class="fa-solid fa-microphone text-sm"></i>
+                        <button type="button" id="voiceBtn" onclick="startVoiceRecording()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors flex-shrink-0" title="Voice Input (Speech-to-Text)">
+                            <i class="fa-solid fa-microphone text-xs"></i>
                         </button>
 
-                        <button type="button" onclick="stopSpeaking()" class="w-9 h-9 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors flex-shrink-0" title="Stop Audio Playback">
-                            <i class="fa-solid fa-volume-xmark text-sm"></i>
+                        <button type="button" onclick="stopSpeaking()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors flex-shrink-0" title="Stop Audio Playback">
+                            <i class="fa-solid fa-volume-xmark text-xs"></i>
                         </button>
 
                         <textarea 
                             id="chat-input" 
                             rows="1" 
                             placeholder="Ask anything from your uploaded notes... (Shift+Enter for newline)"
-                            class="flex-1 min-h-[40px] max-h-32 bg-transparent text-white placeholder-slate-500 focus:outline-none resize-none py-2 text-sm leading-relaxed"
+                            class="flex-1 min-h-[38px] max-h-32 bg-transparent text-white placeholder-slate-500 focus:outline-none resize-none py-1.5 text-xs sm:text-sm leading-relaxed"
                             required
                         ></textarea>
 
                         <button type="submit" id="sendBtn" class="w-9 h-9 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white flex items-center justify-center transition-all flex-shrink-0 shadow-md shadow-indigo-500/25" title="Send Question">
-                            <i class="fa-solid fa-paper-plane text-sm"></i>
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
                         </button>
                     </form>
 
                     <!-- Footer Microbar -->
-                    <div class="flex items-center justify-between text-[11px] py-1.5 px-2 text-slate-400">
-                        <span class="flex items-center gap-1.5">
-                            <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                            <span>Strictly grounded in your documents with citations</span>
+                    <div class="flex items-center justify-between text-[11px] py-1.5 px-2 text-slate-500">
+                        <span class="flex items-center gap-1.5 text-slate-400">
+                            <i class="fa-solid fa-shield-halved text-emerald-400 text-[10px]"></i>
+                            <span>Strictly grounded in your documents with verified citations</span>
                         </span>
-                        <div class="flex items-center gap-3">
-                            <button type="button" onclick="clearChat()" class="hover:text-slate-200 transition-colors underline">
-                                Clear chat
-                            </button>
-                        </div>
+                        <button type="button" onclick="clearChat()" class="text-slate-500 hover:text-rose-400 transition-colors flex items-center gap-1">
+                            <i class="fa-regular fa-trash-can text-[10px]"></i>
+                            <span>Clear chat</span>
+                        </button>
                     </div>
                 </div>
 
             </div>
 
             <!-- TAB 2: Executive Summarizer (Modern Dark Tech Theme) -->
-            <div id="tab-content-summary" class="studio-tab-content hidden flex-1 pb-16">
+            <div id="tab-content-summary" class="studio-tab-content hidden flex-1 overflow-y-auto h-full pr-1 pb-12">
                 <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
                         <div>
@@ -227,7 +226,7 @@
             </div>
 
             <!-- TAB 3: Interactive 3D Flashcards (Modern Dark Tech Theme) -->
-            <div id="tab-content-flashcards" class="studio-tab-content hidden flex-1 pb-16">
+            <div id="tab-content-flashcards" class="studio-tab-content hidden flex-1 overflow-y-auto h-full pr-1 pb-12">
                 <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                         <div>
@@ -261,7 +260,7 @@
             </div>
 
             <!-- TAB 4: Interactive Quiz Arena (Modern Dark Tech Theme) -->
-            <div id="tab-content-quiz" class="studio-tab-content hidden flex-1 pb-16">
+            <div id="tab-content-quiz" class="studio-tab-content hidden flex-1 overflow-y-auto h-full pr-1 pb-12">
                 <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                         <div>
@@ -295,7 +294,7 @@
             </div>
 
             <!-- TAB 5: Conceptual Short Answer Questions (Modern Dark Tech Theme) -->
-            <div id="tab-content-questions" class="studio-tab-content hidden flex-1 pb-16">
+            <div id="tab-content-questions" class="studio-tab-content hidden flex-1 overflow-y-auto h-full pr-1 pb-12">
                 <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                         <div>
@@ -329,7 +328,7 @@
             </div>
 
             <!-- TAB 6: Research Paper Intelligence Studio (Modern Dark Tech Theme) -->
-            <div id="tab-content-research" class="studio-tab-content hidden flex-1 pb-16">
+            <div id="tab-content-research" class="studio-tab-content hidden flex-1 overflow-y-auto h-full pr-1 pb-12">
                 <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                         <div>
