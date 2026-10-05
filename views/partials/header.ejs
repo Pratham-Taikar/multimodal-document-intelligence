@@ -166,7 +166,54 @@
             border-radius: 0;
             border: none;
         }
-
+        .prose-dark hr {
+            border: 0;
+            border-top: 1px solid #1e293b;
+            margin: 1.5rem 0;
+        }
+        .prose-dark table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.25rem 0;
+            font-size: 0.85rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+        }
+        .prose-dark th {
+            background: #1e293b;
+            color: #f1f5f9;
+            font-weight: 700;
+            padding: 0.6rem 0.85rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        .prose-dark td {
+            padding: 0.6rem 0.85rem;
+            border-bottom: 1px solid #1e293b;
+            color: #cbd5e1;
+        }
+        .diagram-callout {
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.45) 0%, rgba(15, 23, 42, 0.7) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-left: 4px solid #818cf8;
+            border-radius: 0.875rem;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+        }
+        .diagram-callout-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #a5b4fc;
+            margin-bottom: 0.5rem;
+            font-family: "JetBrains Mono", monospace;
+        }
         /* Pulsing Dot Animation for Thinking State */
         @keyframes chatBounce {
             0%, 80%, 100% { transform: scale(0); opacity: 0.3; }

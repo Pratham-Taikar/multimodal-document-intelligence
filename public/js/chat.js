@@ -141,7 +141,7 @@ function showToast(message, type = 'info') {
 
 // ---------------- Studio Tab Switching (Modern Dark Tech Theme) ----------------
 function switchTab(tabName) {
-    const tabs = ['chat', 'summary', 'flashcards', 'quiz', 'questions'];
+    const tabs = ['chat', 'summary', 'flashcards', 'quiz', 'questions', 'research'];
     tabs.forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         const content = document.getElementById(`tab-content-${t}`);
@@ -496,10 +496,48 @@ function escapeJs(str) {
 
 function renderMarkdown(text) {
     if (!text) return '';
+
+    let cleaned = String(text);
+
+    // 1. Normalize squashed separators and headings
+    cleaned = cleaned.replace(/---\s*(#{1,6}\s+)/g, '\n\n---\n\n$1');
+    cleaned = cleaned.replace(/([^\n])\s*(#{1,6}\s+)/g, '$1\n\n$2');
+
+    // 2. Ensure newlines before numbered list items or bullets if squashed inline
+    cleaned = cleaned.replace(/([.!?])\s+([0-9]+\.\s+[A-Z])/g, '$1\n\n$2');
+    cleaned = cleaned.replace(/([.!?])\s+([*•-]\s+[A-Z])/g, '$1\n\n$2');
+
+    // 3. Clean raw redundant hashtags
+    cleaned = cleaned.replace(/#{4,}/g, '###');
+
+    // 4. Handle LaTeX equations cleanly ($$math$$ and $math$)
+    cleaned = cleaned.replace(/\$\$([\s\S]+?)\$\$/g, '<div class="my-2.5 p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl font-mono text-xs text-indigo-300 overflow-x-auto text-center shadow-inner">$1</div>');
+    cleaned = cleaned.replace(/\$([^\$\n]+?)\$/g, '<code class="font-mono text-xs text-indigo-300 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/60">$1</code>');
+
+    let html = '';
     if (typeof marked !== 'undefined') {
-        return marked.parse(text);
+        try {
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+            html = marked.parse(cleaned);
+        } catch (e) {
+            html = escapeHtml(cleaned).replace(/\n/g, '<br>');
+        }
+    } else {
+        html = escapeHtml(cleaned).replace(/\n/g, '<br>');
     }
-    return escapeHtml(text).replace(/\n/g, '<br>');
+
+    // 5. Enhance Diagram callouts into modern dark cards
+    html = html.replace(/<p><strong>📊 Diagram Reference:<\/strong>([\s\S]*?)<\/p>/gi, function(match, content) {
+        return `<div class="diagram-callout"><div class="diagram-callout-header"><i class="fa-solid fa-project-diagram text-indigo-400"></i> Grounded Diagram Citation</div><div class="text-xs text-indigo-200 font-semibold">${content}</div></div>`;
+    });
+    html = html.replace(/<p><strong>📊 Diagram Analysis &amp; Explanation:<\/strong>([\s\S]*?)<\/p>/gi, function(match, content) {
+        return `<div class="diagram-callout"><div class="diagram-callout-header"><i class="fa-solid fa-chart-pie text-violet-400"></i> Diagram Visual Structure &amp; Breakdown</div><div class="text-xs text-slate-300 leading-relaxed">${content}</div></div>`;
+    });
+
+    return html;
 }
 
 function copyToClipboard(text) {
@@ -1145,6 +1183,83 @@ async function generateShortAnswerDrill() {
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-arrows-rotate text-xs"></i><span>Generate Short Answers</span>`;
         }
+    }
+}
+
+// ---------------- TAB 6: Research Paper Studio (Modern Dark Tech Theme) ----------------
+async function requestResearch(mode = 'breakdown') {
+    const box = document.getElementById("research-result-box");
+    if (!box) return;
+
+    const modes = ['breakdown', 'methodology', 'critique', 'citations'];
+    modes.forEach(m => {
+        const b = document.getElementById(`btn-res-${m}`);
+        if (b) {
+            if (m === mode) {
+                b.className = 'research-mode-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5';
+            } else {
+                b.className = 'research-mode-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1.5';
+            }
+        }
+    });
+
+    const modeLabels = {
+        breakdown: 'Comprehensive Paper Breakdown',
+        methodology: 'Methodology & Architecture Deep-Dive',
+        critique: 'Critical Peer-Review Critique',
+        citations: 'BibTeX, IEEE & APA Citations'
+    };
+
+    box.innerHTML = `
+        <div class="text-center py-16 text-slate-400">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl mx-auto mb-4 animate-spin border border-indigo-500/20">
+                <i class="fa-solid fa-microscope"></i>
+            </div>
+            <h4 class="text-base font-bold text-white">Analyzing Research Paper (${modeLabels[mode] || mode})...</h4>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Extracting citations, inspecting diagrams, synthesizing methodology, and evaluating rigor.</p>
+        </div>
+    `;
+
+    try {
+        const res = await axios.post(`/api/study/research/${subjectId}`, { mode });
+        const data = res.data;
+
+        const filenamePill = data.filename ? `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0b0f19] border border-slate-800 text-xs text-slate-300">
+                <i class="fa-solid fa-file-pdf text-red-400 text-xs"></i>
+                <span class="font-mono text-[11px] truncate max-w-[260px]">${data.filename}</span>
+            </span>
+        ` : '';
+
+        const copyBtn = `
+            <button onclick="copyToClipboard(document.getElementById('research-markdown-content').innerText)" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors font-medium">
+                <i class="fa-regular fa-copy"></i>
+                <span>Copy Analysis</span>
+            </button>
+        `;
+
+        box.innerHTML = `
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-800 gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider font-mono">${modeLabels[mode] || mode}</span>
+                        ${filenamePill}
+                    </div>
+                    <div>${copyBtn}</div>
+                </div>
+                
+                <div id="research-markdown-content" class="prose-dark text-sm text-slate-200 leading-relaxed bg-[#0b0f19]/80 p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-xl">
+                    ${renderMarkdown(data.result || data.message || 'No analysis available.')}
+                </div>
+            </div>
+        `;
+        showToast("Research analysis completed successfully", "success");
+    } catch (err) {
+        box.innerHTML = `
+            <div class="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-center text-red-300 text-xs">
+                ${err.response?.data?.message || "Failed to analyze research paper. Please ensure documents are uploaded."}
+            </div>
+        `;
     }
 }
 
