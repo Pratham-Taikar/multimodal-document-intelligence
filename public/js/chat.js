@@ -475,11 +475,9 @@ function renderMessages() {
         `;
     }).join('');
 
-    if (chatBox) {
-        setTimeout(() => {
-            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
-        }, 30);
-    }
+    setTimeout(() => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    }, 40);
 }
 
 function formatTime(isoString) {

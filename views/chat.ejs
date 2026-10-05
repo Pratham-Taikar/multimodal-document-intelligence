@@ -71,11 +71,11 @@
         </div>
     </div>
 
-    <!-- Main Workspace Container (Contained Responsive Height) -->
-    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 flex gap-6 relative min-h-0 h-[calc(100vh-8.5rem)] overflow-hidden">
+    <!-- Main Workspace Container (Professional Sticky Layout) -->
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex gap-6 relative items-start">
 
-        <!-- Left Document Notes Sidebar -->
-        <aside id="doc-sidebar-pane" class="w-80 flex-shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl hidden lg:flex flex-col h-full backdrop-blur-md overflow-hidden">
+        <!-- Left Document Notes Sidebar (Sticky: moves/sticks with page scroll) -->
+        <aside id="doc-sidebar-pane" class="w-80 flex-shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl hidden lg:flex flex-col sticky top-32 h-[calc(100vh-9.5rem)] backdrop-blur-md z-20">
             <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <i class="fa-solid fa-folder-open text-indigo-400"></i>
@@ -107,18 +107,18 @@
         </aside>
 
         <!-- Right / Center Studio Content -->
-        <main class="flex-1 min-w-0 flex flex-col h-full min-h-0 overflow-hidden">
+        <main class="flex-1 min-w-0 flex flex-col relative">
 
             <!-- TAB 1: Grounded RAG Chat (Modern Dark Tech Theme) -->
-            <div id="tab-content-chat" class="studio-tab-content flex-1 flex flex-col h-full min-h-0 overflow-hidden">
+            <div id="tab-content-chat" class="studio-tab-content flex-1 flex flex-col relative">
                 
-                <!-- Chat Message Stream (Cleanly scrolls within container, never covered) -->
-                <div id="chat-box" class="flex-1 overflow-y-auto space-y-4 pr-2 py-2 scroll-smooth">
+                <!-- Chat Message Stream -->
+                <div id="chat-box" class="flex-1 space-y-5 pb-16 min-h-[480px]">
                     <!-- Messages will be injected dynamically -->
                 </div>
 
-                <!-- Grounded Chat Dock (Pinned to bottom of pane, no overlap) -->
-                <div class="flex-shrink-0 pt-2 pb-1 bg-gradient-to-t from-[#080c14] via-[#080c14] to-transparent">
+                <!-- Grounded Chat Dock (Sticky bottom-0: moves/sticks with page scroll) -->
+                <div class="sticky bottom-0 z-30 pt-4 pb-2 bg-gradient-to-t from-[#080c14] via-[#080c14]/95 to-transparent backdrop-blur-md">
                     
                     <!-- Quick Prompt Chips -->
                     <div id="quick-prompt-bar" class="mb-2 flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none text-xs">
