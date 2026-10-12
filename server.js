@@ -52,13 +52,22 @@ app.get('/register', isGuest, (req, res) => res.render('auth'));
 
 app.get('/login', isGuest, (req, res) => res.render('auth'));
 
+const { getUserStats } = require('./services/gamificationService');
+
 app.get('/dashboard', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     const subjects = await Subject.find({ userId: req.session.userId });
+    let gamification = null;
+    try {
+      gamification = await getUserStats(req.session.userId);
+    } catch (e) {
+      console.warn('Gamification stats error:', e);
+    }
     res.render('dashboard', { 
       subjects, 
       user, 
+      gamification,
       hasEnvGeminiKey: Boolean(process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEYS),
       hasEnvGroqKey: Boolean(process.env.GROQ_API_KEY || process.env.GROQ_API_KEYS)
     });
@@ -82,12 +91,13 @@ app.post('/api/user/key', isAuthenticated, async (req, res) => {
 
 app.get('/chat/:subjectId', isAuthenticated, async (req, res) => {
   try {
+    const user = await User.findById(req.session.userId);
     const subject = await Subject.findOne({ 
       _id: req.params.subjectId, 
       userId: req.session.userId 
     });
     if (!subject) return res.status(404).send('Subject not found');
-    res.render('chat', { subject, subjectId: req.params.subjectId });
+    res.render('chat', { subject, subjectId: req.params.subjectId, user });
   } catch (error) {
     res.status(500).send('Error loading chat');
   }

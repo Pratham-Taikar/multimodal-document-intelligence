@@ -8,5 +8,7 @@ router.post('/flashcards/:subjectId', studyController.createFlashcards);
 router.post('/research/upload/:subjectId', upload.single('researchPaper'), studyController.uploadResearchPaper);
 router.get('/research/paper/:subjectId', studyController.getResearchPaper);
 router.post('/research/:subjectId', studyController.analyzeResearch);
+router.post('/award-xp', studyController.awardXP);
+router.get('/gamification-stats', studyController.getGamificationStats);
 
 module.exports = router;

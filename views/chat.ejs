@@ -407,6 +407,142 @@
         </main>
     </div>
 
+    <!-- Visual Document Citation & Bounding Box Inspector Modal -->
+    <div id="citationInspectorModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div class="max-w-3xl w-full bg-[#0b0f19] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-white font-mono" id="inspector-doc-title">Document Citation</h3>
+                            <span class="text-[10px] bg-indigo-500/20 text-indigo-300 font-mono px-2 py-0.5 rounded-full border border-indigo-500/30 font-semibold" id="inspector-chunk-badge">#1</span>
+                        </div>
+                        <p class="text-xs text-slate-400">Strict Provenance Coordinate Inspector & Grounding Evidence</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-semibold" id="inspector-match-badge">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        98.6% Cosine Grounding
+                    </span>
+                    <button onclick="closeCitationInspector()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 overflow-y-auto space-y-5">
+                
+                <!-- Coordinate Metrics Strip -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 text-center">
+                        <div class="text-[10px] uppercase font-mono text-slate-500 font-bold">Document Page</div>
+                        <div class="text-sm font-bold text-white font-mono mt-0.5" id="inspector-page-num">Page 1</div>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 text-center">
+                        <div class="text-[10px] uppercase font-mono text-slate-500 font-bold">Bounding Box Coordinates</div>
+                        <div class="text-xs font-bold text-indigo-400 font-mono mt-0.5" id="inspector-coords">[140, 48, 270, 552]</div>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 text-center">
+                        <div class="text-[10px] uppercase font-mono text-slate-500 font-bold">Retrieval Rank</div>
+                        <div class="text-sm font-bold text-emerald-400 font-mono mt-0.5" id="inspector-rank">#1 Cosine Match</div>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 text-center">
+                        <div class="text-[10px] uppercase font-mono text-slate-500 font-bold">Verification State</div>
+                        <div class="text-xs font-bold text-purple-400 font-mono mt-0.5">Strict RAG Grounded</div>
+                    </div>
+                </div>
+
+                <!-- Visual Page & Bounding Box Viewport -->
+                <div>
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                        <span class="font-bold uppercase tracking-wider text-[11px] font-mono text-indigo-400 flex items-center gap-1.5">
+                            <i class="fa-regular fa-file-pdf"></i>
+                            <span>Visual Document Coordinate Viewport</span>
+                        </span>
+                        <span class="font-mono text-[11px] text-slate-500">Target bounding box highlighted</span>
+                    </div>
+
+                    <div class="bg-[#080c14] border border-slate-800 rounded-xl p-5 relative overflow-hidden shadow-inner">
+                        <div class="max-w-xl mx-auto bg-slate-900/90 border border-slate-700/80 rounded-lg p-5 shadow-2xl relative">
+                            <!-- Page header mockup -->
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800 text-[10px] font-mono text-slate-500">
+                                <span id="inspector-preview-filename">document.pdf</span>
+                                <span id="inspector-preview-page">Page 1 of Document</span>
+                            </div>
+
+                            <!-- Mock paragraph lines above -->
+                            <div class="space-y-1.5 opacity-30 mb-3">
+                                <div class="h-2 bg-slate-600 rounded w-full"></div>
+                                <div class="h-2 bg-slate-600 rounded w-5/6"></div>
+                                <div class="h-2 bg-slate-600 rounded w-4/6"></div>
+                            </div>
+
+                            <!-- Highlighted Bounding Box Area -->
+                            <div class="relative p-3.5 rounded-lg border-2 border-indigo-500/80 bg-indigo-500/10 shadow-lg shadow-indigo-500/10 transition-all">
+                                <div class="absolute -top-2.5 right-3 px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9px] font-bold tracking-wider">
+                                    TARGET CITATION BOUNDING BOX
+                                </div>
+                                <p class="text-xs sm:text-sm text-indigo-100 font-mono leading-relaxed" id="inspector-highlighted-text">
+                                    Loading grounded text excerpt...
+                                </p>
+                            </div>
+
+                            <!-- Mock paragraph lines below -->
+                            <div class="space-y-1.5 opacity-30 mt-3">
+                                <div class="h-2 bg-slate-600 rounded w-11/12"></div>
+                                <div class="h-2 bg-slate-600 rounded w-4/5"></div>
+                                <div class="h-2 bg-slate-600 rounded w-3/4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verified Source Excerpt -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                            Verified Source Excerpt
+                        </span>
+                        <button onclick="copyInspectorExcerpt()" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors">
+                            <i class="fa-regular fa-copy text-[11px]"></i>
+                            <span>Copy Excerpt</span>
+                        </button>
+                    </div>
+                    <blockquote class="italic text-xs text-slate-300 leading-relaxed border-l-2 border-indigo-500 pl-3 py-1 font-sans" id="inspector-quote-text">
+                        Loading excerpt...
+                    </blockquote>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between">
+                <span class="text-xs text-slate-500 font-mono">
+                    <i class="fa-solid fa-shield-check text-emerald-400 mr-1"></i>
+                    Citation cross-verified by AskMyNotes RAG Engine
+                </span>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyCitationReference()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors flex items-center gap-1.5">
+                        <i class="fa-regular fa-clipboard"></i>
+                        <span>Copy Citation Tag</span>
+                    </button>
+                    <button onclick="closeCitationInspector()" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-500/20">
+                        Close
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <%- include('partials/toast') %>
     <script src="/js/chat.js"></script>
 </body>

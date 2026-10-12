@@ -176,3 +176,33 @@ exports.analyzeResearch = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+const { awardUserXP, getUserStats } = require('../services/gamificationService');
+
+exports.awardXP = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { action, score, metadata } = req.body;
+    const result = await awardUserXP(userId, action, { score, ...metadata });
+    res.json(result);
+  } catch (error) {
+    console.error('Gamification awardXP error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getGamificationStats = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const stats = await getUserStats(userId);
+    res.json(stats);
+  } catch (error) {
+    console.error('Gamification stats error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
