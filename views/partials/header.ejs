@@ -53,8 +53,33 @@
         }
     </script>
 
-    <!-- Markdown & Confetti for Study Modules -->
+    <!-- Markdown, Mermaid Flowcharts & Confetti for Study Modules -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        if (typeof mermaid !== 'undefined') {
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'dark',
+                securityLevel: 'loose',
+                themeVariables: {
+                    darkMode: true,
+                    background: '#0b0f19',
+                    mainBkg: '#0f172a',
+                    nodeBorder: '#6366f1',
+                    clusterBkg: '#080c14',
+                    clusterBorder: '#334155',
+                    lineColor: '#818cf8',
+                    textColor: '#f8fafc',
+                    primaryColor: '#4f46e5',
+                    primaryTextColor: '#ffffff',
+                    primaryBorderColor: '#6366f1',
+                    secondaryColor: '#1e1b4b',
+                    tertiaryColor: '#0b0f19'
+                }
+            });
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 

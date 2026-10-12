@@ -56,6 +56,13 @@ function formatCleanAnswer(text) {
   // Strip diagram disclaimer blocks where model says no visual images exist
   formatted = formatted.replace(/\*\*📊 Diagram (?:Analysis & Explanation|Reference)[^\n]*\*\*[:\s]*\(?Note:?\s*(?:While specific diagrams|No visual images|No diagrams|No figures|Not embedded|Not shown)[\s\S]*?(?=\n\n\*\*|\n\n- |\n\n[0-9]+\. |$)/gi, '').trim();
 
+  // Protect code fences (including mermaid diagrams) from being mangled
+  const codeBlocks = [];
+  formatted = formatted.replace(/(```[\s\S]*?```)/g, (match) => {
+    codeBlocks.push(match);
+    return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+  });
+
   // If text has inline markdown headings without newlines (e.g., "word --- ### 2. Heading"), fix spacing
   formatted = formatted.replace(/---\s*(#{1,4}\s+)/g, '\n\n---\n\n$1');
   formatted = formatted.replace(/([^\n])\s*(#{1,4}\s+)/g, '$1\n\n$2');
@@ -68,6 +75,9 @@ function formatCleanAnswer(text) {
 
   // Clean excessive multiple line breaks (normalize to double line breaks)
   formatted = formatted.replace(/\n{3,}/g, '\n\n').trim();
+
+  // Restore protected code blocks
+  formatted = formatted.replace(/__CODE_BLOCK_(\d+)__/g, (_, idx) => codeBlocks[Number(idx)] || '');
 
   return formatted;
 }
@@ -108,6 +118,11 @@ FORMATTING & VISUAL PRESENTATION RULES:
    - Bold key technical terms when first introduced.
    - DO NOT output messy raw hashtag symbols (avoid raw inline "###", "##"). Use clean bold headings like "**1. Topic Title**".
    - Mathematical formulas: write formulas in natural, clean notation (e.g. \`Bit Duration = 1 / Data Rate\`) or standard math. Avoid excessive nested LaTeX clutter like \\text{...}.
+
+VISUAL FLOWCHART & PROCESS DIAGRAM RULES:
+- When the user asks for a flowchart, workflow, process diagram, pipeline, or architecture visual:
+  * Synthesize a clean Mermaid flowchart block using \`\`\`mermaid ... \`\`\`
+  * Use "flowchart TD" (top-down) or "flowchart LR" (left-to-right) with concise node descriptions.
 
 DIAGRAM GROUNDING RULES (STRICT):
 - ONLY include a diagram citation and analysis IF a concrete diagram, architecture diagram, flowchart, or figure is EXPLICITLY present and named in the provided document context.

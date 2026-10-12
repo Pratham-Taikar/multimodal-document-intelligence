@@ -5,9 +5,11 @@ const {
   extractTextFromPDF, 
   extractTextFromTXT,
   extractTextFromDOCX,
-  extractTextFromPPTX, 
+  extractTextFromPPTX,
+  extractTextFromImage,
   chunkText 
 } = require('../services/documentProcessor');
+const User = require('../models/User');
 
 exports.uploadDocuments = async (req, res) => {
   try {
@@ -61,6 +63,7 @@ exports.uploadDocuments = async (req, res) => {
 
 async function processDocument(buffer, originalName, subjectId, userId) {
   const ext = path.extname(originalName).toLowerCase();
+  const isImage = ['.png', '.jpg', '.jpeg', '.webp'].includes(ext);
   
   let text;
 
@@ -72,8 +75,14 @@ async function processDocument(buffer, originalName, subjectId, userId) {
     text = await extractTextFromDOCX(buffer);
   } else if (ext === '.pptx' || ext === '.ppt') {
     text = await extractTextFromPPTX(buffer);
+  } else if (isImage) {
+    const user = await User.findById(userId).lean().catch(() => null);
+    text = await extractTextFromImage(buffer, originalName, {
+      apiKey: user?.customApiKey,
+      groqApiKey: user?.customGroqApiKey
+    });
   } else {
-    throw new Error('Unsupported file type. Please upload PDF, TXT, DOCX, or PPTX.');
+    throw new Error('Unsupported file type. Please upload PDF, TXT, DOCX, PPTX, or Image (PNG, JPG, WEBP).');
   }
 
   if (!text || text.trim().length === 0) {
@@ -90,7 +99,8 @@ async function processDocument(buffer, originalName, subjectId, userId) {
         filename: originalName,
         originalName,
         chunkIndex: chunk.chunkIndex,
-        content: chunk.content
+        content: chunk.content,
+        isDiagram: isImage
       });
     }
   }

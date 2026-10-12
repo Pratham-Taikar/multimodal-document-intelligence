@@ -197,6 +197,7 @@ async function loadDocuments() {
             if (ext === 'pdf') icon = 'fa-file-pdf text-rose-500';
             else if (ext === 'docx' || ext === 'doc') icon = 'fa-file-word text-blue-500';
             else if (ext === 'pptx' || ext === 'ppt') icon = 'fa-file-powerpoint text-amber-500';
+            else if (['png', 'jpg', 'jpeg', 'webp'].includes(ext)) icon = 'fa-file-image text-emerald-400';
 
             const dateStr = file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : 'Active';
 
@@ -481,7 +482,22 @@ function renderMessages() {
 
     setTimeout(() => {
         window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        triggerMermaid();
     }, 40);
+}
+
+function triggerMermaid() {
+    if (typeof mermaid !== 'undefined') {
+        setTimeout(() => {
+            try {
+                mermaid.run({
+                    querySelector: '.mermaid'
+                });
+            } catch (e) {
+                console.warn("Mermaid rendering warning:", e);
+            }
+        }, 80);
+    }
 }
 
 function formatTime(isoString) {
@@ -559,6 +575,38 @@ function renderMarkdown(text) {
     html = html.replace(/<p><strong>📊 Diagram Analysis &amp; Explanation:<\/strong>([\s\S]*?)<\/p>/gi, function(match, content) {
         if (isDisclaimer(content)) return '';
         return `<div class="diagram-callout"><div class="diagram-callout-header"><i class="fa-solid fa-chart-pie text-violet-400"></i> Diagram Visual Structure &amp; Breakdown</div><div class="text-xs text-slate-300 leading-relaxed">${content}</div></div>`;
+    });
+
+    // 7. Interactive Mermaid Flowchart & Process Diagram Transformation
+    html = html.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/gi, function(match, code) {
+        const decoded = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+        return `
+            <div class="mermaid-diagram-card my-4 p-4 bg-[#080c14] border border-indigo-500/30 rounded-2xl shadow-xl overflow-x-auto text-center">
+                <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-xs text-indigo-400 font-mono">
+                    <span class="flex items-center gap-1.5 font-bold"><i class="fa-solid fa-project-diagram"></i> Interactive Flowchart / Architecture Diagram</span>
+                    <button onclick="copyToClipboard(this.getAttribute('data-code'))" data-code="${escapeHtml(decoded)}" class="text-slate-400 hover:text-white text-[11px] font-sans flex items-center gap-1 px-2 py-0.5 rounded hover:bg-slate-800 transition-colors">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copy Code</span>
+                    </button>
+                </div>
+                <div class="mermaid text-xs text-slate-200">${decoded}</div>
+            </div>
+        `;
+    });
+
+    html = html.replace(/```mermaid\n([\s\S]+?)\n```/gi, function(match, code) {
+        return `
+            <div class="mermaid-diagram-card my-4 p-4 bg-[#080c14] border border-indigo-500/30 rounded-2xl shadow-xl overflow-x-auto text-center">
+                <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-xs text-indigo-400 font-mono">
+                    <span class="flex items-center gap-1.5 font-bold"><i class="fa-solid fa-project-diagram"></i> Interactive Flowchart / Architecture Diagram</span>
+                    <button onclick="copyToClipboard(this.getAttribute('data-code'))" data-code="${escapeHtml(code)}" class="text-slate-400 hover:text-white text-[11px] font-sans flex items-center gap-1 px-2 py-0.5 rounded hover:bg-slate-800 transition-colors">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copy Code</span>
+                    </button>
+                </div>
+                <div class="mermaid text-xs text-slate-200">${code}</div>
+            </div>
+        `;
     });
 
     return html;
@@ -755,6 +803,7 @@ async function requestSummary(type = 'medium') {
         `;
         showToast("Summary synthesized successfully", "success");
         awardGamificationXP('summary_generated');
+        triggerMermaid();
     } catch (err) {
         box.innerHTML = `
             <div class="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-center text-red-300 text-xs">
@@ -1282,6 +1331,7 @@ async function requestResearch(mode = 'breakdown') {
         `;
         showToast("Research analysis completed successfully", "success");
         awardGamificationXP('research_analyzed');
+        triggerMermaid();
     } catch (err) {
         box.innerHTML = `
             <div class="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-center text-red-300 text-xs">

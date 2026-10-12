@@ -3,14 +3,14 @@ const path = require('path');
 
 const storage = multer.memoryStorage();
 
-const ALLOWED_EXTS = new Set(['.pdf', '.txt', '.docx', '.doc', '.pptx', '.ppt']);
+const ALLOWED_EXTS = new Set(['.pdf', '.txt', '.docx', '.doc', '.pptx', '.ppt', '.png', '.jpg', '.jpeg', '.webp']);
 
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   if (ALLOWED_EXTS.has(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Only PDF, TXT, DOCX, and PPTX files are allowed'));
+    cb(new Error('Only PDF, TXT, DOCX, PPTX, and Image files (PNG, JPG, WEBP) are allowed'));
   }
 };
 

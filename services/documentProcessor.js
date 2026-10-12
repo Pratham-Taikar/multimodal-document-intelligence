@@ -40,6 +40,24 @@ async function extractTextFromPPTX(buffer) {
 }
 
 /**
+ * Extract and analyze text & components from Image/Diagram buffer
+ */
+async function extractTextFromImage(buffer, originalName, options = {}) {
+  const base64Data = buffer.toString('base64');
+  const ext = (originalName || '').split('.').pop().toLowerCase();
+  const mimeType = ext === 'png' ? 'image/png' : (ext === 'webp' ? 'image/webp' : 'image/jpeg');
+
+  try {
+    const { analyzeImageWithAI } = require('./aiService');
+    const result = await analyzeImageWithAI(base64Data, mimeType, originalName, options);
+    return result;
+  } catch (err) {
+    console.warn(`Vision AI fallback for ${originalName}:`, err.message);
+    return `### 📊 Diagram / Figure Document: ${originalName}\n- **Type**: Visual Diagram / Graphic\n- **Source**: Uploaded image file \`${originalName}\`\n- **Description**: Grounded diagram included in study notes for multimodal analysis.`;
+  }
+}
+
+/**
  * Chunk text into smaller pieces
  */
 function chunkText(text) {
@@ -69,5 +87,6 @@ module.exports = {
   extractTextFromTXT,
   extractTextFromDOCX,
   extractTextFromPPTX,
+  extractTextFromImage,
   chunkText
 };

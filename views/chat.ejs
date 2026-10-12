@@ -84,15 +84,15 @@
                 <label class="cursor-pointer text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors inline-flex items-center gap-1 shadow-sm shadow-indigo-500/25">
                     <i class="fa-solid fa-plus text-[10px]"></i>
                     <span>Upload</span>
-                    <input type="file" id="sidebar-doc-upload" class="hidden" accept=".pdf,.txt,.docx,.doc,.pptx,.ppt" multiple>
+                    <input type="file" id="sidebar-doc-upload" class="hidden" accept=".pdf,.txt,.docx,.doc,.pptx,.ppt,.png,.jpg,.jpeg,.webp" multiple>
                 </label>
             </div>
 
             <!-- Upload drag/drop zone -->
             <div id="dropzone" class="my-3 border-2 border-dashed border-slate-700/80 hover:border-indigo-500 rounded-xl p-4 text-center cursor-pointer transition-colors bg-[#0b0f19]/60 group">
                 <i class="fa-solid fa-cloud-arrow-up text-indigo-400 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
-                <p class="text-xs font-bold text-white">Upload PDF, DOCX, PPTX</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Drag files here or click to browse</p>
+                <p class="text-xs font-bold text-white">Upload PDF, DOCX, PPTX, Images</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Documents & diagrams analyzed via Vision AI</p>
             </div>
 
             <!-- Document List -->
@@ -125,6 +125,10 @@
                         <button onclick="quickPrompt('Summarize the primary concepts across these notes in bullet points')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
                             <i class="fa-solid fa-sparkles text-indigo-400 text-[10px]"></i>
                             <span>Summary of Notes</span>
+                        </button>
+                        <button onclick="quickPrompt('Summarize the core workflow, process, and architecture from my notes into a clean visual Mermaid flowchart diagram')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white border border-indigo-500/40 hover:border-indigo-500 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
+                            <i class="fa-solid fa-project-diagram text-indigo-400 text-[10px]"></i>
+                            <span>Flowchart Diagram</span>
                         </button>
                         <button onclick="quickPrompt('What are the key terms, definitions, and formulas discussed?')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
                             <i class="fa-solid fa-book-bookmark text-indigo-400 text-[10px]"></i>

@@ -17,7 +17,12 @@ An AI-powered academic and multimodal document intelligence platform designed to
 - **Interactive Citation & Coordinate Inspector**: Click any citation pill `[file.pdf #1]` to inspect exact document page numbers, visual bounding box coordinates `[ymin, xmin, ymax, xmax]`, and highlighted grounded excerpts.
 - Automatic diagram extraction, grounding citations, and disclaimer filtering.
 
-### 3. Dedicated Research Paper Studio (`🔬 Research Studio`)
+### 3. Multimodal Diagram Analysis & Interactive Flowchart Synthesis
+- **Image & Diagram Ingestion**: Direct upload of `.png`, `.jpg`, `.jpeg`, and `.webp` visual documents and diagram slides.
+- **Vision AI Ingestion**: Automatic extraction of diagram labels, components, workflows, and empirical charts using Vision AI.
+- **Interactive Mermaid Flowcharts**: Generate visual SVG flowcharts, architecture pipelines, and sequence diagrams directly in chat, summaries, and research breakdowns with a 1-click quick action.
+
+### 4. Dedicated Research Paper Studio (`🔬 Research Studio`)
 - Dedicated, isolated research paper upload separate from standard notes.
 - **Comprehensive Paper Breakdown**: Core hypothesis, methodology summary, mathematical formulas, and empirical findings.
 - **Architecture & Methodology Deep-Dive**: Step-by-step algorithms, loss functions, and dataset splits.
