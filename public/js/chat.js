@@ -139,6 +139,43 @@ function showToast(message, type = 'info') {
     }, 3200);
 }
 
+// ---------------- Universal Studio Module Caching ----------------
+const studioCache = {
+    get(module, key) {
+        try {
+            const raw = localStorage.getItem(`AskMyNotes_${module}_${subjectId}`);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            return key ? parsed[key] : parsed;
+        } catch (e) {
+            return null;
+        }
+    },
+    set(module, key, value) {
+        try {
+            const raw = localStorage.getItem(`AskMyNotes_${module}_${subjectId}`);
+            const parsed = raw ? JSON.parse(raw) : {};
+            if (key) {
+                parsed[key] = value;
+            } else {
+                Object.assign(parsed, value);
+            }
+            localStorage.setItem(`AskMyNotes_${module}_${subjectId}`, JSON.stringify(parsed));
+        } catch (e) {}
+    },
+    clear(module) {
+        try {
+            if (module) {
+                localStorage.removeItem(`AskMyNotes_${module}_${subjectId}`);
+            } else {
+                ['summary', 'research', 'flashcards', 'quiz', 'short_answers'].forEach(m => {
+                    localStorage.removeItem(`AskMyNotes_${m}_${subjectId}`);
+                });
+            }
+        } catch (e) {}
+    }
+};
+
 // ---------------- Studio Tab Switching (Modern Dark Tech Theme) ----------------
 function switchTab(tabName) {
     const tabs = ['chat', 'summary', 'flashcards', 'quiz', 'questions', 'research'];
@@ -159,8 +196,21 @@ function switchTab(tabName) {
     if (tabName === 'chat' && chatInput) {
         setTimeout(() => chatInput.focus(), 50);
     }
+    if (tabName === 'summary') {
+        restoreSummaryTab();
+    }
+    if (tabName === 'flashcards') {
+        restoreFlashcardsTab();
+    }
+    if (tabName === 'quiz') {
+        restoreQuizTab();
+    }
+    if (tabName === 'questions') {
+        restoreQuestionsTab();
+    }
     if (tabName === 'research') {
         loadResearchPaperInfo();
+        restoreResearchTab();
     }
 }
 
@@ -226,6 +276,10 @@ async function deleteDoc(filename) {
     try {
         await axios.delete(`/documents/delete/${subjectId}/${encodeURIComponent(filename)}`);
         showToast("Document deleted", "success");
+        studioCache.clear('summary');
+        studioCache.clear('flashcards');
+        studioCache.clear('quiz');
+        studioCache.clear('short_answers');
         loadDocuments();
     } catch (e) {
         showToast("Failed to delete document", "error");
@@ -243,6 +297,10 @@ async function uploadFileList(files) {
             headers: { "Content-Type": "multipart/form-data" }
         });
         showToast("Documents uploaded successfully!", "success");
+        studioCache.clear('summary');
+        studioCache.clear('flashcards');
+        studioCache.clear('quiz');
+        studioCache.clear('short_answers');
         loadDocuments();
     } catch (err) {
         showToast(err.response?.data?.message || "Upload failed. Please upload PDF, DOCX, or PPTX.", "error");
@@ -956,7 +1014,67 @@ if (chatForm) {
 }
 
 // ---------------- TAB 2: Executive Summarizer (Modern Dark Tech Theme) ----------------
-async function requestSummary(type = 'medium') {
+function renderSummaryData(type, data) {
+    const box = document.getElementById("summary-result-box");
+    if (!box) return;
+
+    const sourcesPills = (data.sources && data.sources.length > 0) ? `
+        <div class="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+            <span class="font-bold text-[10px] uppercase text-indigo-400 font-mono">Sources:</span>
+            ${data.sources.map(s => `<span class="px-2 py-0.5 bg-[#0b0f19] border border-slate-700/80 rounded font-medium text-slate-200">${s}</span>`).join('')}
+        </div>
+    ` : '';
+
+    const typeTitle = type === 'short' ? 'Rapid (3-5 Bullets)' : (type === 'medium' ? 'Conceptual Breakdown' : 'Master Study Guide');
+
+    box.innerHTML = `
+        <div>
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider font-mono">${typeTitle}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Ready</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="requestSummary('${type}', true)" title="Regenerate fresh summary from notes" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-300 px-2.5 py-1 rounded-lg hover:bg-slate-800 transition-colors">
+                        <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                        <span>Regenerate</span>
+                    </button>
+                    <button onclick="copyToClipboard(document.getElementById('summary-text-content').innerText)" class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg hover:bg-slate-800 transition-colors">
+                        <i class="fa-regular fa-copy text-[11px]"></i>
+                        <span>Copy</span>
+                    </button>
+                </div>
+            </div>
+            ${sourcesPills}
+            <div id="summary-text-content" class="prose-dark text-sm text-slate-200 leading-relaxed bg-[#0b0f19]/80 p-6 rounded-2xl border border-slate-800">
+                ${renderMarkdown(data.summary)}
+            </div>
+        </div>
+    `;
+
+    triggerMermaid();
+}
+
+function restoreSummaryTab() {
+    const cached = studioCache.get('summary');
+    if (!cached) return;
+    const activeType = cached.activeType || 'short';
+    if (cached[activeType]) {
+        ['short', 'medium', 'detailed'].forEach(t => {
+            const b = document.getElementById(`btn-sum-${t}`);
+            if (b) {
+                if (t === activeType) {
+                    b.className = 'summary-type-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm';
+                } else {
+                    b.className = 'summary-type-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white';
+                }
+            }
+        });
+        renderSummaryData(activeType, cached[activeType]);
+    }
+}
+
+async function requestSummary(type = 'medium', forceRegenerate = false) {
     const box = document.getElementById("summary-result-box");
     if (!box) return;
 
@@ -970,6 +1088,15 @@ async function requestSummary(type = 'medium') {
             }
         }
     });
+
+    studioCache.set('summary', 'activeType', type);
+
+    // If already generated and not forced to regenerate, render immediately from cache (0ms, 0 API calls)
+    const cachedData = studioCache.get('summary', type);
+    if (cachedData && !forceRegenerate) {
+        renderSummaryData(type, cachedData);
+        return;
+    }
 
     box.innerHTML = `
         <div class="text-center py-16 text-slate-400">
@@ -985,31 +1112,16 @@ async function requestSummary(type = 'medium') {
         const res = await axios.post(`/api/study/summary/${subjectId}`, { type });
         const data = res.data;
 
-        const sourcesPills = (data.sources && data.sources.length > 0) ? `
-            <div class="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-                <span class="font-bold text-[10px] uppercase text-indigo-400 font-mono">Sources:</span>
-                ${data.sources.map(s => `<span class="px-2 py-0.5 bg-[#0b0f19] border border-slate-700/80 rounded font-medium text-slate-200">${s}</span>`).join('')}
-            </div>
-        ` : '';
+        // Persist in subject cache
+        studioCache.set('summary', type, {
+            summary: data.summary,
+            sources: data.sources || [],
+            generatedAt: new Date().toISOString()
+        });
 
-        box.innerHTML = `
-            <div>
-                <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
-                    <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider font-mono">${type} Study Breakdown</span>
-                    <button onclick="copyToClipboard(document.getElementById('summary-text-content').innerText)" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white font-medium transition-colors">
-                        <i class="fa-regular fa-copy"></i>
-                        <span>Copy</span>
-                    </button>
-                </div>
-                ${sourcesPills}
-                <div id="summary-text-content" class="prose-dark text-sm text-slate-200 leading-relaxed bg-[#0b0f19]/80 p-6 rounded-2xl border border-slate-800">
-                    ${renderMarkdown(data.summary)}
-                </div>
-            </div>
-        `;
+        renderSummaryData(type, data);
         showToast("Summary synthesized successfully", "success");
         awardGamificationXP('summary_generated');
-        triggerMermaid();
     } catch (err) {
         box.innerHTML = `
             <div class="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-center text-red-300 text-xs">
@@ -1055,6 +1167,9 @@ async function generateFlashcardsDeck() {
             return;
         }
 
+        studioCache.set('flashcards', 'deck', flashcardsDeck);
+        studioCache.set('flashcards', 'index', currentCardIndex);
+
         renderCurrentFlashcard();
         showToast(`Generated ${flashcardsDeck.length} flashcards!`, "success");
         awardGamificationXP('flashcards_reviewed');
@@ -1069,6 +1184,19 @@ async function generateFlashcardsDeck() {
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-arrows-rotate text-xs"></i><span>Generate Card Deck</span>`;
         }
+    }
+}
+
+function restoreFlashcardsTab() {
+    if (flashcardsDeck && flashcardsDeck.length > 0) {
+        renderCurrentFlashcard();
+        return;
+    }
+    const cached = studioCache.get('flashcards');
+    if (cached && Array.isArray(cached.deck) && cached.deck.length > 0) {
+        flashcardsDeck = cached.deck;
+        currentCardIndex = cached.index || 0;
+        renderCurrentFlashcard();
     }
 }
 
@@ -1166,6 +1294,7 @@ function flipFlashcard() {
 function nextFlashcard() {
     if (currentCardIndex < flashcardsDeck.length - 1) {
         currentCardIndex++;
+        studioCache.set('flashcards', 'index', currentCardIndex);
         renderCurrentFlashcard();
     }
 }
@@ -1173,6 +1302,7 @@ function nextFlashcard() {
 function prevFlashcard() {
     if (currentCardIndex > 0) {
         currentCardIndex--;
+        studioCache.set('flashcards', 'index', currentCardIndex);
         renderCurrentFlashcard();
     }
 }
@@ -1229,6 +1359,7 @@ async function startInteractiveQuiz() {
             return;
         }
 
+        studioCache.set('quiz', 'data', { quiz: currentQuiz, index: quizIndex, score: userScore, answered: Array.from(answeredQuestions) });
         renderQuizQuestion();
         showToast("Practice Assessment Ready!", "success");
     } catch (err) {
@@ -1241,6 +1372,31 @@ async function startInteractiveQuiz() {
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i><span>Generate New Quiz (5 MCQs)</span>`;
+        }
+    }
+}
+
+function restoreQuizTab() {
+    const arena = document.getElementById("quiz-arena");
+    if (!arena) return;
+    if (currentQuiz && currentQuiz.length > 0) {
+        if (quizIndex >= currentQuiz.length) {
+            renderQuizCompleted();
+        } else {
+            renderQuizQuestion();
+        }
+        return;
+    }
+    const cached = studioCache.get('quiz', 'data');
+    if (cached && Array.isArray(cached.quiz) && cached.quiz.length > 0) {
+        currentQuiz = cached.quiz;
+        quizIndex = cached.index || 0;
+        userScore = cached.score || 0;
+        answeredQuestions = new Set(cached.answered || []);
+        if (quizIndex >= currentQuiz.length) {
+            renderQuizCompleted();
+        } else {
+            renderQuizQuestion();
         }
     }
 }
@@ -1314,6 +1470,8 @@ function handleOptionSelect(chosenLetter, optionIndex) {
         userScore++;
     }
 
+    studioCache.set('quiz', 'data', { quiz: currentQuiz, index: quizIndex, score: userScore, answered: Array.from(answeredQuestions) });
+
     ['A', 'B', 'C', 'D'].forEach(letter => {
         const btn = document.getElementById(`opt-btn-${letter}`);
         if (btn) {
@@ -1353,6 +1511,7 @@ function handleOptionSelect(chosenLetter, optionIndex) {
 
 function quizNext() {
     quizIndex++;
+    studioCache.set('quiz', 'data', { quiz: currentQuiz, index: quizIndex, score: userScore, answered: Array.from(answeredQuestions) });
     renderQuizQuestion();
 }
 
@@ -1404,6 +1563,40 @@ function renderQuizCompleted() {
 }
 
 // ---------------- TAB 5: Short Answer Drills (Modern Dark Tech Theme) ----------------
+function renderShortAnswerQuestions(questions) {
+    const container = document.getElementById("short-answer-container");
+    if (!container) return;
+
+    container.innerHTML = questions.map((q, idx) => `
+        <div class="bg-[#0b0f19] border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span class="font-bold text-indigo-400 text-[10px] uppercase font-mono">Question ${idx + 1}</span>
+                <span class="font-mono text-[11px]">Citation: ${q.citation || 'Subject Notes'}</span>
+            </div>
+            <h4 class="text-sm font-bold text-white mb-3">${escapeHtml(q.question)}</h4>
+            
+            <details class="group bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+                <summary class="cursor-pointer text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center justify-between transition-colors">
+                    <span>Reveal Verified Model Answer</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300 leading-relaxed">
+                    ${escapeHtml(q.answer)}
+                </div>
+            </details>
+        </div>
+    `).join('');
+}
+
+function restoreQuestionsTab() {
+    const container = document.getElementById("short-answer-container");
+    if (!container) return;
+    const cached = studioCache.get('short_answers', 'questions');
+    if (Array.isArray(cached) && cached.length > 0) {
+        renderShortAnswerQuestions(cached);
+    }
+}
+
 async function generateShortAnswerDrill() {
     const container = document.getElementById("short-answer-container");
     const btn = document.getElementById("btn-gen-short");
@@ -1433,26 +1626,8 @@ async function generateShortAnswerDrill() {
             return;
         }
 
-        container.innerHTML = questions.map((q, idx) => `
-            <div class="bg-[#0b0f19] border border-slate-800 rounded-2xl p-5 shadow-xl">
-                <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-                    <span class="font-bold text-indigo-400 text-[10px] uppercase font-mono">Question ${idx + 1}</span>
-                    <span class="font-mono text-[11px]">Citation: ${q.citation || 'Subject Notes'}</span>
-                </div>
-                <h4 class="text-sm font-bold text-white mb-3">${escapeHtml(q.question)}</h4>
-                
-                <details class="group bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-                    <summary class="cursor-pointer text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center justify-between transition-colors">
-                        <span>Reveal Verified Model Answer</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition-transform"></i>
-                    </summary>
-                    <div class="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300 leading-relaxed">
-                        ${escapeHtml(q.answer)}
-                    </div>
-                </details>
-            </div>
-        `).join('');
-
+        studioCache.set('short_answers', 'questions', questions);
+        renderShortAnswerQuestions(questions);
         showToast("Short answers generated", "success");
     } catch (err) {
         container.innerHTML = `
@@ -1469,7 +1644,78 @@ async function generateShortAnswerDrill() {
 }
 
 // ---------------- TAB 6: Research Paper Studio (Modern Dark Tech Theme) ----------------
-async function requestResearch(mode = 'breakdown') {
+function renderResearchData(mode, data) {
+    const box = document.getElementById("research-result-box");
+    if (!box) return;
+
+    const modeLabels = {
+        breakdown: 'Comprehensive Paper Breakdown',
+        methodology: 'Methodology & Architecture Deep-Dive',
+        critique: 'Critical Peer-Review Critique',
+        citations: 'BibTeX, IEEE & APA Citations'
+    };
+
+    const filenamePill = data.filename ? `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0b0f19] border border-slate-800 text-xs text-slate-300">
+            <i class="fa-solid fa-file-pdf text-red-400 text-xs"></i>
+            <span class="font-mono text-[11px] truncate max-w-[260px]">${data.filename}</span>
+        </span>
+    ` : '';
+
+    const copyBtn = `
+        <div class="flex items-center gap-2">
+            <button onclick="requestResearch('${mode}', true)" title="Regenerate research analysis" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-300 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors font-medium">
+                <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                <span>Regenerate</span>
+            </button>
+            <button onclick="copyToClipboard(document.getElementById('research-markdown-content').innerText)" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors font-medium">
+                <i class="fa-regular fa-copy"></i>
+                <span>Copy Analysis</span>
+            </button>
+        </div>
+    `;
+
+    box.innerHTML = `
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-800 gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider font-mono">${modeLabels[mode] || mode}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Ready</span>
+                    ${filenamePill}
+                </div>
+                <div>${copyBtn}</div>
+            </div>
+            
+            <div id="research-markdown-content" class="prose-dark text-sm text-slate-200 leading-relaxed bg-[#0b0f19]/80 p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-xl">
+                ${renderMarkdown(data.result || data.message || 'No analysis available.')}
+            </div>
+        </div>
+    `;
+
+    triggerMermaid();
+}
+
+function restoreResearchTab() {
+    const cached = studioCache.get('research');
+    if (!cached) return;
+    const activeMode = cached.activeMode || 'breakdown';
+    if (cached[activeMode]) {
+        const modes = ['breakdown', 'methodology', 'critique', 'citations'];
+        modes.forEach(m => {
+            const b = document.getElementById(`btn-res-${m}`);
+            if (b) {
+                if (m === activeMode) {
+                    b.className = 'research-mode-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5';
+                } else {
+                    b.className = 'research-mode-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1.5';
+                }
+            }
+        });
+        renderResearchData(activeMode, cached[activeMode]);
+    }
+}
+
+async function requestResearch(mode = 'breakdown', forceRegenerate = false) {
     const box = document.getElementById("research-result-box");
     if (!box) return;
 
@@ -1484,6 +1730,14 @@ async function requestResearch(mode = 'breakdown') {
             }
         }
     });
+
+    studioCache.set('research', 'activeMode', mode);
+
+    const cachedData = studioCache.get('research', mode);
+    if (cachedData && !forceRegenerate) {
+        renderResearchData(mode, cachedData);
+        return;
+    }
 
     const modeLabels = {
         breakdown: 'Comprehensive Paper Breakdown',
@@ -1506,38 +1760,15 @@ async function requestResearch(mode = 'breakdown') {
         const res = await axios.post(`/api/study/research/${subjectId}`, { mode });
         const data = res.data;
 
-        const filenamePill = data.filename ? `
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0b0f19] border border-slate-800 text-xs text-slate-300">
-                <i class="fa-solid fa-file-pdf text-red-400 text-xs"></i>
-                <span class="font-mono text-[11px] truncate max-w-[260px]">${data.filename}</span>
-            </span>
-        ` : '';
+        studioCache.set('research', mode, {
+            result: data.result || data.message || '',
+            filename: data.filename || '',
+            generatedAt: new Date().toISOString()
+        });
 
-        const copyBtn = `
-            <button onclick="copyToClipboard(document.getElementById('research-markdown-content').innerText)" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors font-medium">
-                <i class="fa-regular fa-copy"></i>
-                <span>Copy Analysis</span>
-            </button>
-        `;
-
-        box.innerHTML = `
-            <div class="space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-800 gap-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider font-mono">${modeLabels[mode] || mode}</span>
-                        ${filenamePill}
-                    </div>
-                    <div>${copyBtn}</div>
-                </div>
-                
-                <div id="research-markdown-content" class="prose-dark text-sm text-slate-200 leading-relaxed bg-[#0b0f19]/80 p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-xl">
-                    ${renderMarkdown(data.result || data.message || 'No analysis available.')}
-                </div>
-            </div>
-        `;
+        renderResearchData(mode, data);
         showToast("Research analysis completed successfully", "success");
         awardGamificationXP('research_analyzed');
-        triggerMermaid();
     } catch (err) {
         box.innerHTML = `
             <div class="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-center text-red-300 text-xs">
@@ -1568,6 +1799,7 @@ async function handleResearchPaperUpload(file) {
         });
 
         showToast("Research paper uploaded successfully!", "success");
+        studioCache.clear('research');
         if (nameEl) {
             nameEl.innerText = file.name;
             nameEl.className = "font-mono text-xs text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 truncate max-w-[260px] sm:max-w-md";
@@ -1575,7 +1807,7 @@ async function handleResearchPaperUpload(file) {
         if (btnText) btnText.innerText = "Replace Dedicated Paper";
 
         // Trigger paper breakdown automatically after upload
-        requestResearch('breakdown');
+        requestResearch('breakdown', true);
     } catch (err) {
         showToast(err.response?.data?.message || "Failed to upload research paper.", "error");
     } finally {
@@ -1612,6 +1844,11 @@ document.addEventListener("DOMContentLoaded", () => {
     loadDocuments();
     loadResearchPaperInfo();
     renderMessages();
+    restoreSummaryTab();
+    restoreFlashcardsTab();
+    restoreQuizTab();
+    restoreQuestionsTab();
+    restoreResearchTab();
 });
 
 // ---------------- Visual Citation & Coordinate Inspector ----------------
