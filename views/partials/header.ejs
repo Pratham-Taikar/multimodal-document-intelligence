@@ -60,6 +60,7 @@
         if (typeof mermaid !== 'undefined') {
             mermaid.initialize({
                 startOnLoad: false,
+                suppressErrorRendering: true,
                 theme: 'dark',
                 securityLevel: 'loose',
                 themeVariables: {
@@ -78,6 +79,10 @@
                     tertiaryColor: '#0b0f19'
                 }
             });
+            // Intercept parse errors to prevent default bomb icon injection
+            mermaid.parseError = function(err, hash) {
+                console.warn("Mermaid syntax parsing handled safely:", err);
+            };
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
@@ -91,6 +96,14 @@
         body {
             background-color: #080c14;
             color: #f1f5f9;
+        }
+
+        /* Suppress raw Mermaid error bomb icons and stray error SVGs */
+        .error-icon,
+        [id^="dmermaid"],
+        svg[aria-roledescription="error"],
+        .mermaid-diagram-card svg.error-icon {
+            display: none !important;
         }
 
         /* 3D Flip Card Effect for Flashcards */

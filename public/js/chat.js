@@ -486,17 +486,219 @@ function renderMessages() {
     }, 40);
 }
 
-function triggerMermaid() {
-    if (typeof mermaid !== 'undefined') {
-        setTimeout(() => {
-            try {
-                mermaid.run({
-                    querySelector: '.mermaid'
-                });
-            } catch (e) {
-                console.warn("Mermaid rendering warning:", e);
+function decodeHtml(html) {
+    if (!html) return '';
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+}
+
+function sanitizeMermaidCode(raw) {
+    if (!raw) return 'flowchart TD\n  Start["Start"] --> Finish["End"]';
+    let code = decodeHtml(raw).trim();
+
+    // Strip markdown code fences if wrapped
+    code = code.replace(/^```(?:mermaid)?\s*/i, '').replace(/```\s*$/i, '').trim();
+
+    // Check if a valid directive exists anywhere in the snippet and discard chatter prior to it
+    const directivePattern = /(?:^|\n)\s*(flowchart\s+(?:TD|TB|BT|RL|LR)|graph\s+(?:TD|TB|BT|RL|LR)|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|gantt|pie|gitGraph|mindmap)\b/i;
+    const match = code.match(directivePattern);
+    if (match) {
+        const idx = code.search(directivePattern);
+        if (idx > 0) {
+            code = code.substring(idx).trim();
+        }
+    } else {
+        code = 'flowchart TD\n' + code;
+    }
+
+    // Normalize lines & sanitize syntax that commonly breaks Mermaid parsers
+    const lines = code.split('\n');
+    const sanitizedLines = [];
+    const validDirectives = /^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|mindmap)\b/i;
+
+    for (let line of lines) {
+        let l = line.trim();
+        if (!l) continue;
+
+        // Skip standard directive line
+        if (validDirectives.test(l)) {
+            sanitizedLines.push(l);
+            continue;
+        }
+
+        // Convert C-style comments to Mermaid %% comments
+        if (l.startsWith('//')) {
+            sanitizedLines.push('%% ' + l.substring(2).trim());
+            continue;
+        }
+
+        // Normalize unicode and simple arrows to standard mermaid arrows
+        l = l.replace(/\s*→\s*/g, ' --> ');
+        l = l.replace(/([a-zA-Z0-9_\-\]"'\)])\s*->\s*([a-zA-Z0-9_\-\["'\(])/g, '$1 --> $2');
+
+        // Sanitize subgraphs with spaces: subgraph Transport Layer -> subgraph "Transport Layer"
+        if (/^subgraph\s+/i.test(l)) {
+            l = l.replace(/^subgraph\s+([a-zA-Z0-9_\s\-]+)$/i, (m, title) => {
+                const clean = title.trim();
+                if (clean.startsWith('"') || clean.includes('[')) return m;
+                return `subgraph "${clean}"`;
+            });
+            sanitizedLines.push(l);
+            continue;
+        }
+
+        if (l.toLowerCase() === 'end') {
+            sanitizedLines.push('end');
+            continue;
+        }
+
+        // Strip trailing semicolons
+        l = l.replace(/;\s*$/, '');
+
+        // Sanitize edge labels with unquoted parentheses, colons, or slashes: -->|Label (info)| -> -->|"Label (info)"|
+        l = l.replace(/(-->|--|==>|-\.->)\s*\|([^"\|\n\r]+)\|\s*/g, (m, arrow, label) => {
+            const clean = label.replace(/"/g, "'").trim();
+            return `${arrow}|"${clean}"| `;
+        });
+
+        // Sanitize square bracket nodes: Node[text with (parens) or : colons] -> Node["text with (parens) or : colons"]
+        l = l.replace(/([a-zA-Z0-9_\-]+)\[([^"\]\n\r]+)\]/g, (m, id, text) => {
+            if (text.startsWith('"') && text.endsWith('"')) return m;
+            const cleanText = text.replace(/"/g, "'").trim();
+            return `${id}["${cleanText}"]`;
+        });
+
+        // Sanitize curly decision nodes: Node{question or text} -> Node{"question or text"}
+        l = l.replace(/([a-zA-Z0-9_\-]+)\{([^"\}\n\r]+)\}/g, (m, id, text) => {
+            if (text.startsWith('"') && text.endsWith('"')) return m;
+            const cleanText = text.replace(/"/g, "'").trim();
+            return `${id}{"${cleanText}"}`;
+        });
+
+        // Sanitize stadium nodes: Node([text]) -> Node(["text"])
+        l = l.replace(/([a-zA-Z0-9_\-]+)\(\[([^"\]\n\r]+)\]\)/g, (m, id, text) => {
+            if (text.startsWith('"') && text.endsWith('"')) return m;
+            const cleanText = text.replace(/"/g, "'").trim();
+            return `${id}(["${cleanText}"])`;
+        });
+
+        // Sanitize circle nodes: Node((text)) -> Node(("text"))
+        l = l.replace(/([a-zA-Z0-9_\-]+)\(\(([^"\)\n\r]+)\)\)/g, (m, id, text) => {
+            if (text.startsWith('"') && text.endsWith('"')) return m;
+            const cleanText = text.replace(/"/g, "'").trim();
+            return `${id}(("${cleanText}"))`;
+        });
+
+        // Sanitize standard round nodes: Node(text with special chars) -> Node("text with special chars")
+        l = l.replace(/([a-zA-Z0-9_\-]+)\(([^"\)\n\r]+)\)/g, (m, id, text) => {
+            if (text.startsWith('"') && text.endsWith('"')) return m;
+            if (/[/:&\[\]\(\)\-]/.test(text)) {
+                const cleanText = text.replace(/"/g, "'").trim();
+                return `${id}("${cleanText}")`;
             }
-        }, 80);
+            return m;
+        });
+
+        sanitizedLines.push(l);
+    }
+
+    return sanitizedLines.join('\n');
+}
+
+function renderFallbackPipeline(code) {
+    const steps = [];
+    const matches = code.matchAll(/(?:\["([^"]+)"\]|\[([^\]]+)\]|\{"([^"]+)"\}|\{([^\}]+)\})/g);
+    for (const m of matches) {
+        const label = (m[1] || m[2] || m[3] || m[4] || '').trim();
+        if (label && !steps.includes(label)) {
+            steps.push(label);
+        }
+    }
+
+    if (steps.length === 0) {
+        const lines = code.split('\n').filter(l => l.includes('-->') || l.includes('->'));
+        lines.forEach(l => {
+            const parts = l.split(/-->|->/);
+            parts.forEach(p => {
+                const clean = p.replace(/[\[\]\(\)\{\}"]/g, '').trim();
+                if (clean && !steps.includes(clean)) steps.push(clean);
+            });
+        });
+    }
+
+    if (steps.length === 0) {
+        return `<div class="text-xs text-slate-400 font-mono py-2">Workflow architecture visualized.</div>`;
+    }
+
+    return `
+        <div class="py-4 px-2 flex flex-wrap items-center justify-center gap-2.5 max-w-2xl mx-auto">
+            ${steps.map((step, idx) => `
+                <div class="flex items-center gap-2.5 my-1">
+                    <div class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-[#0b0f19] border border-indigo-500/40 text-xs text-indigo-200 font-semibold shadow-md flex items-center gap-2 hover:border-indigo-400 transition-colors">
+                        <span class="w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-400 font-mono text-[10px] flex items-center justify-center font-bold">${idx + 1}</span>
+                        <span>${escapeHtml(step)}</span>
+                    </div>
+                    ${idx < steps.length - 1 ? `<i class="fa-solid fa-arrow-right text-indigo-400/80 text-xs"></i>` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function triggerMermaid() {
+    if (typeof mermaid === 'undefined') return;
+    const targets = document.querySelectorAll('.mermaid-target:not([data-rendered="true"])');
+    let idCounter = 0;
+
+    for (const el of targets) {
+        el.setAttribute('data-rendered', 'true');
+        const rawCode = el.getAttribute('data-mermaid-code') || el.innerText;
+        const sanitized = sanitizeMermaidCode(rawCode);
+        const chartId = 'mermaid-chart-' + Date.now() + '-' + (idCounter++);
+
+        let renderedSvg = '';
+
+        try {
+            // Pre-validate syntax with mermaid.parse if available
+            if (typeof mermaid.parse === 'function') {
+                try {
+                    await mermaid.parse(sanitized);
+                } catch (parseErr) {
+                    console.warn("Mermaid pre-parse validation failed, using visual pipeline:", parseErr.message);
+                    el.innerHTML = renderFallbackPipeline(sanitized);
+                    continue;
+                }
+            }
+
+            const result = await mermaid.render(chartId, sanitized);
+            renderedSvg = result && result.svg ? result.svg : '';
+
+            // Guard against Mermaid returning an internal syntax error bomb SVG
+            if (
+                !renderedSvg ||
+                renderedSvg.includes('Syntax error') ||
+                renderedSvg.includes('error-icon') ||
+                renderedSvg.includes('mermaid version') ||
+                renderedSvg.includes('dmermaid-chart')
+            ) {
+                throw new Error("Mermaid rendered syntax error graphic");
+            }
+
+            el.innerHTML = renderedSvg;
+            el.classList.add('mermaid-success');
+        } catch (renderError) {
+            console.warn("Mermaid handled gracefully via structured visual pipeline:", renderError.message);
+
+            // Clean up any stray error SVG elements that Mermaid may have attached to body or DOM
+            document.querySelectorAll(`[id*="${chartId}"], .error-icon, [id^="dmermaid"]`).forEach(node => {
+                if (!el.contains(node)) {
+                    node.remove();
+                }
+            });
+
+            el.innerHTML = renderFallbackPipeline(sanitized);
+        }
     }
 }
 
@@ -589,7 +791,9 @@ function renderMarkdown(text) {
                         <span>Copy Code</span>
                     </button>
                 </div>
-                <div class="mermaid text-xs text-slate-200">${decoded}</div>
+                <div class="mermaid-target text-xs text-slate-200 min-h-[60px] flex items-center justify-center" data-mermaid-code="${escapeHtml(decoded)}">
+                    <div class="flex items-center gap-2 text-indigo-400/70 text-xs font-mono"><i class="fa-solid fa-circle-notch fa-spin"></i> Synthesizing interactive diagram...</div>
+                </div>
             </div>
         `;
     });
@@ -604,7 +808,9 @@ function renderMarkdown(text) {
                         <span>Copy Code</span>
                     </button>
                 </div>
-                <div class="mermaid text-xs text-slate-200">${code}</div>
+                <div class="mermaid-target text-xs text-slate-200 min-h-[60px] flex items-center justify-center" data-mermaid-code="${escapeHtml(code)}">
+                    <div class="flex items-center gap-2 text-indigo-400/70 text-xs font-mono"><i class="fa-solid fa-circle-notch fa-spin"></i> Synthesizing interactive diagram...</div>
+                </div>
             </div>
         `;
     });

@@ -76,8 +76,41 @@ function formatCleanAnswer(text) {
   // Clean excessive multiple line breaks (normalize to double line breaks)
   formatted = formatted.replace(/\n{3,}/g, '\n\n').trim();
 
-  // Restore protected code blocks
-  formatted = formatted.replace(/__CODE_BLOCK_(\d+)__/g, (_, idx) => codeBlocks[Number(idx)] || '');
+  // Sanitize mermaid code blocks to guarantee double-quoted node and edge labels
+  const sanitizeMermaidBlock = (block) => {
+    if (!block.startsWith('```mermaid')) return block;
+    return block.replace(/(```mermaid\s*\n)([\s\S]*?)(\n```)/i, (m, open, body, close) => {
+      const lines = body.split('\n');
+      const sanitized = lines.map(line => {
+        let l = line.trim();
+        // Quote square bracket nodes: A[Packet (Header)] -> A["Packet (Header)"]
+        l = l.replace(/([a-zA-Z0-9_\-]+)\[([^"\]\n\r]+)\]/g, (match, id, text) => {
+          if (text.startsWith('"') && text.endsWith('"')) return match;
+          const cleanText = text.replace(/"/g, "'").trim();
+          return `${id}["${cleanText}"]`;
+        });
+        // Quote curly decision nodes: A{Is Valid?} -> A{"Is Valid?"}
+        l = l.replace(/([a-zA-Z0-9_\-]+)\{([^"\}\n\r]+)\}/g, (match, id, text) => {
+          if (text.startsWith('"') && text.endsWith('"')) return match;
+          const cleanText = text.replace(/"/g, "'").trim();
+          return `${id}{"${cleanText}"}`;
+        });
+        // Quote edge labels: -->|Label| -> -->|"Label"|
+        l = l.replace(/(-->|--|==>|-\.->)\s*\|([^"\|\n\r]+)\|\s*/g, (match, arrow, label) => {
+          const clean = label.replace(/"/g, "'").trim();
+          return `${arrow}|"${clean}"| `;
+        });
+        return l;
+      });
+      return open + sanitized.join('\n') + close;
+    });
+  };
+
+  // Restore protected code blocks with Mermaid sanitization applied
+  formatted = formatted.replace(/__CODE_BLOCK_(\d+)__/g, (_, idx) => {
+    const original = codeBlocks[Number(idx)] || '';
+    return sanitizeMermaidBlock(original);
+  });
 
   return formatted;
 }
@@ -122,7 +155,12 @@ FORMATTING & VISUAL PRESENTATION RULES:
 VISUAL FLOWCHART & PROCESS DIAGRAM RULES:
 - When the user asks for a flowchart, workflow, process diagram, pipeline, or architecture visual:
   * Synthesize a clean Mermaid flowchart block using \`\`\`mermaid ... \`\`\`
-  * Use "flowchart TD" (top-down) or "flowchart LR" (left-to-right) with concise node descriptions.
+  * Start with "flowchart TD" (top-down) or "flowchart LR" (left-to-right).
+  * CRITICAL: ALWAYS enclose node label text in double quotes inside brackets:
+    Correct: A["Data Packet (Header + Payload)"] --> B["Router: Next Hop Lookup"]
+    Wrong: A[Data Packet (Header + Payload)] (unquoted parentheses or colons cause syntax errors)
+  * Use simple alphanumeric node identifiers: A, B, C, Step1, Step2.
+  * Keep labels clean and concise.
 
 DIAGRAM GROUNDING RULES (STRICT):
 - ONLY include a diagram citation and analysis IF a concrete diagram, architecture diagram, flowchart, or figure is EXPLICITLY present and named in the provided document context.
