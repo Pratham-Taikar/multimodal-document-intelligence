@@ -24,13 +24,16 @@
                                 Grounded AI
                             </span>
                         </div>
-                        <p class="text-xs text-slate-400 font-medium">
-                            <span id="doc-counter"><%= (subject && subject.notes) ? subject.notes.length : 0 %> document(s) uploaded</span>
-                            &bull;
-                            <button onclick="toggleDocSidebar()" class="text-indigo-400 hover:text-indigo-300 hover:underline font-semibold transition-colors">
-                                View / Upload Notes
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <button id="sidebar-toggle-btn" onclick="toggleDocSidebar()" class="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/80 text-slate-200 hover:text-white border border-slate-700/60 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 group" title="Toggle Subject Notes Sidebar">
+                                <i id="sidebar-toggle-icon" class="fa-solid fa-table-columns text-indigo-400 group-hover:text-indigo-300 transition-transform"></i>
+                                <span>Notes Sidebar</span>
                             </button>
-                        </p>
+                            <p class="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                                <span class="text-slate-600">&bull;</span>
+                                <span id="doc-counter"><%= (subject && subject.notes) ? subject.notes.length : 0 %> document(s) uploaded</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -71,21 +74,39 @@
         </div>
     </div>
 
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebar-backdrop" onclick="toggleDocSidebar(false)" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 lg:hidden hidden-backdrop" aria-hidden="true"></div>
+
     <!-- Main Workspace Container (Professional Sticky Layout) -->
     <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex gap-6 relative items-start">
 
-        <!-- Left Document Notes Sidebar (Sticky: moves/sticks with page scroll) -->
-        <aside id="doc-sidebar-pane" class="w-80 flex-shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl hidden lg:flex flex-col sticky top-32 h-[calc(100vh-9.5rem)] backdrop-blur-md z-20">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-folder-open text-indigo-400"></i>
-                    <span>Subject Notes</span>
-                </h3>
-                <label class="cursor-pointer text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors inline-flex items-center gap-1 shadow-sm shadow-indigo-500/25">
-                    <i class="fa-solid fa-plus text-[10px]"></i>
-                    <span>Upload</span>
-                    <input type="file" id="sidebar-doc-upload" class="hidden" accept=".pdf,.txt,.docx,.doc,.pptx,.ppt,.png,.jpg,.jpeg,.webp" multiple>
-                </label>
+        <!-- Left Document Notes Sidebar (Sticky desktop collapsible / Mobile off-canvas drawer) -->
+        <aside id="doc-sidebar-pane" class="w-80 flex-shrink-0 bg-slate-900/95 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col sticky top-32 h-[calc(100vh-9.5rem)] backdrop-blur-md z-20 overflow-hidden">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs flex-shrink-0 border border-indigo-500/20">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate">Subject Notes</h3>
+                        <p class="text-[10px] text-slate-400 truncate">Knowledge Sources</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <label class="cursor-pointer text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white transition-all inline-flex items-center gap-1 shadow-md shadow-indigo-500/20 active:scale-95" title="Upload documents">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                        <span>Upload</span>
+                        <input type="file" id="sidebar-doc-upload" class="hidden" accept=".pdf,.txt,.docx,.doc,.pptx,.ppt,.png,.jpg,.jpeg,.webp" multiple>
+                    </label>
+                    <!-- Desktop Collapse Button -->
+                    <button type="button" onclick="toggleDocSidebar()" class="hidden lg:flex w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 items-center justify-center transition-colors border border-slate-800/80 hover:border-slate-700" title="Collapse Notes Sidebar">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    <!-- Mobile Close Button -->
+                    <button type="button" onclick="toggleDocSidebar(false)" class="lg:hidden w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors border border-slate-800/80 hover:border-slate-700" title="Close Sidebar">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Upload drag/drop zone -->
@@ -123,11 +144,11 @@
                     <!-- Quick Prompt Chips -->
                     <div id="quick-prompt-bar" class="mb-2 flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none text-xs">
                         <button onclick="quickPrompt('Summarize the primary concepts across these notes in bullet points')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
-                            <i class="fa-solid fa-sparkles text-indigo-400 text-[10px]"></i>
+                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-400 text-[10px]"></i>
                             <span>Summary of Notes</span>
                         </button>
                         <button onclick="quickPrompt('Summarize the core workflow, process, and architecture from my notes into a clean visual Mermaid flowchart diagram')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white border border-indigo-500/40 hover:border-indigo-500 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">
-                            <i class="fa-solid fa-project-diagram text-indigo-400 text-[10px]"></i>
+                            <i class="fa-solid fa-diagram-project text-indigo-400 text-[10px]"></i>
                             <span>Flowchart Diagram</span>
                         </button>
                         <button onclick="quickPrompt('What are the key terms, definitions, and formulas discussed?')" class="flex-shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 rounded-full px-3 py-1 shadow-sm transition-all flex items-center gap-1.5 font-medium">

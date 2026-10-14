@@ -214,10 +214,53 @@ function switchTab(tabName) {
     }
 }
 
-function toggleDocSidebar() {
+function toggleDocSidebar(forceState) {
     const sidebar = document.getElementById("doc-sidebar-pane");
-    if (sidebar) {
-        sidebar.classList.toggle("hidden");
+    const backdrop = document.getElementById("sidebar-backdrop");
+    const toggleIcon = document.getElementById("sidebar-toggle-icon");
+    if (!sidebar) return;
+
+    const isDesktop = window.innerWidth >= 1024;
+
+    if (isDesktop) {
+        // Desktop collapse toggle
+        if (typeof forceState === 'boolean') {
+            if (forceState) {
+                sidebar.classList.remove("desktop-collapsed");
+            } else {
+                sidebar.classList.add("desktop-collapsed");
+            }
+        } else {
+            sidebar.classList.toggle("desktop-collapsed");
+        }
+        const isCollapsed = sidebar.classList.contains("desktop-collapsed");
+        try {
+            localStorage.setItem("AskMyNotes_sidebar_collapsed", isCollapsed ? "true" : "false");
+        } catch (e) {}
+
+        if (toggleIcon) {
+            toggleIcon.className = isCollapsed 
+                ? "fa-solid fa-angles-right text-indigo-400 group-hover:text-indigo-300 transition-transform" 
+                : "fa-solid fa-table-columns text-indigo-400 group-hover:text-indigo-300 transition-transform";
+        }
+    } else {
+        // Mobile off-canvas drawer toggle
+        const shouldOpen = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains("mobile-open");
+        if (shouldOpen) {
+            sidebar.classList.add("mobile-open");
+            if (backdrop) {
+                backdrop.classList.remove("hidden-backdrop");
+                backdrop.classList.add("visible-backdrop");
+            }
+            document.body.style.overflow = "hidden";
+        } else {
+            sidebar.classList.remove("mobile-open");
+            if (backdrop) {
+                backdrop.classList.remove("visible-backdrop");
+                backdrop.classList.add("hidden-backdrop");
+            }
+            document.body.style.overflow = "";
+        }
     }
 }
 
@@ -225,12 +268,14 @@ function toggleDocSidebar() {
 async function loadDocuments() {
     const list = document.getElementById("sidebar-doc-list");
     const counter = document.getElementById("doc-counter");
+    const headerCount = document.getElementById("sidebar-header-count");
     if (!list) return;
 
     try {
         const res = await axios.get(`/documents/list/${subjectId}`);
         const files = res.data.files || [];
         if (counter) counter.innerText = `${files.length} document(s) uploaded`;
+        if (headerCount) headerCount.innerText = `${files.length} File${files.length === 1 ? '' : 's'} Active`;
 
         if (files.length === 0) {
             list.innerHTML = `
@@ -361,7 +406,7 @@ function renderMessages() {
                     <div onclick="quickPrompt('Summarize the primary concepts across these notes in bullet points')" class="group p-3.5 rounded-xl border border-slate-800 hover:border-indigo-500/50 bg-[#0b0f19]/70 hover:bg-slate-800/80 cursor-pointer transition-all">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="w-6 h-6 rounded-md bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                <i class="fa-solid fa-sparkles"></i>
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
                             </span>
                             <h4 class="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">Summarize Main Concepts</h4>
                         </div>
@@ -830,7 +875,7 @@ function renderMarkdown(text) {
 
     html = html.replace(/<p><strong>📊 Diagram Reference:<\/strong>([\s\S]*?)<\/p>/gi, function(match, content) {
         if (isDisclaimer(content)) return '';
-        return `<div class="diagram-callout"><div class="diagram-callout-header"><i class="fa-solid fa-project-diagram text-indigo-400"></i> Grounded Diagram Citation</div><div class="text-xs text-indigo-200 font-semibold">${content}</div></div>`;
+        return `<div class="diagram-callout"><div class="diagram-callout-header"><i class="fa-solid fa-diagram-project text-indigo-400"></i> Grounded Diagram Citation</div><div class="text-xs text-indigo-200 font-semibold">${content}</div></div>`;
     });
     html = html.replace(/<p><strong>📊 Diagram Analysis &amp; Explanation:<\/strong>([\s\S]*?)<\/p>/gi, function(match, content) {
         if (isDisclaimer(content)) return '';
@@ -843,7 +888,7 @@ function renderMarkdown(text) {
         return `
             <div class="mermaid-diagram-card my-4 p-4 bg-[#080c14] border border-indigo-500/30 rounded-2xl shadow-xl overflow-x-auto text-center">
                 <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-xs text-indigo-400 font-mono">
-                    <span class="flex items-center gap-1.5 font-bold"><i class="fa-solid fa-project-diagram"></i> Interactive Flowchart / Architecture Diagram</span>
+                    <span class="flex items-center gap-1.5 font-bold"><i class="fa-solid fa-diagram-project"></i> Interactive Flowchart / Architecture Diagram</span>
                     <button onclick="copyToClipboard(this.getAttribute('data-code'))" data-code="${escapeHtml(decoded)}" class="text-slate-400 hover:text-white text-[11px] font-sans flex items-center gap-1 px-2 py-0.5 rounded hover:bg-slate-800 transition-colors">
                         <i class="fa-regular fa-copy"></i>
                         <span>Copy Code</span>
@@ -860,7 +905,7 @@ function renderMarkdown(text) {
         return `
             <div class="mermaid-diagram-card my-4 p-4 bg-[#080c14] border border-indigo-500/30 rounded-2xl shadow-xl overflow-x-auto text-center">
                 <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-xs text-indigo-400 font-mono">
-                    <span class="flex items-center gap-1.5 font-bold"><i class="fa-solid fa-project-diagram"></i> Interactive Flowchart / Architecture Diagram</span>
+                    <span class="flex items-center gap-1.5 font-bold"><i class="fa-solid fa-diagram-project"></i> Interactive Flowchart / Architecture Diagram</span>
                     <button onclick="copyToClipboard(this.getAttribute('data-code'))" data-code="${escapeHtml(code)}" class="text-slate-400 hover:text-white text-[11px] font-sans flex items-center gap-1 px-2 py-0.5 rounded hover:bg-slate-800 transition-colors">
                         <i class="fa-regular fa-copy"></i>
                         <span>Copy Code</span>
@@ -1978,4 +2023,42 @@ async function awardGamificationXP(action, score = 0) {
         setTimeout(() => { isAwardingXp = false; }, 400);
     }
 }
+
+// ---------------- Initialize Responsive Sidebar State ----------------
+(function initSidebarState() {
+    try {
+        const savedCollapsed = localStorage.getItem("AskMyNotes_sidebar_collapsed");
+        const sidebar = document.getElementById("doc-sidebar-pane");
+        const toggleIcon = document.getElementById("sidebar-toggle-icon");
+        if (window.innerWidth >= 1024 && savedCollapsed === "true" && sidebar) {
+            sidebar.classList.add("desktop-collapsed");
+            if (toggleIcon) {
+                toggleIcon.className = "fa-solid fa-angles-right text-indigo-400 group-hover:text-indigo-300 transition-transform";
+            }
+        }
+    } catch (e) {}
+
+    // Press Escape to dismiss mobile drawer
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && window.innerWidth < 1024) {
+            toggleDocSidebar(false);
+        }
+    });
+
+    // Close mobile drawer on window resize to desktop
+    window.addEventListener("resize", () => {
+        if (window.innerWidth >= 1024) {
+            const sidebar = document.getElementById("doc-sidebar-pane");
+            const backdrop = document.getElementById("sidebar-backdrop");
+            if (sidebar && sidebar.classList.contains("mobile-open")) {
+                sidebar.classList.remove("mobile-open");
+                if (backdrop) {
+                    backdrop.classList.remove("visible-backdrop");
+                    backdrop.classList.add("hidden-backdrop");
+                }
+                document.body.style.overflow = "";
+            }
+        }
+    });
+})();
 
