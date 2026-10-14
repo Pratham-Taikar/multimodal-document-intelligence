@@ -1769,9 +1769,9 @@ async function requestResearch(mode = 'breakdown', forceRegenerate = false) {
         const b = document.getElementById(`btn-res-${m}`);
         if (b) {
             if (m === mode) {
-                b.className = 'research-mode-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5';
+                b.className = 'research-mode-btn active px-3.5 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20 flex items-center gap-1.5 whitespace-nowrap transition-all';
             } else {
-                b.className = 'research-mode-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1.5';
+                b.className = 'research-mode-btn px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all flex items-center gap-1.5 whitespace-nowrap';
             }
         }
     });
@@ -1988,40 +1988,10 @@ function copyCitationReference() {
     }
 }
 
-// ---------------- Gamification XP & Badge Service Client ----------------
-let isAwardingXp = false;
+// ---------------- Gamification Notifications Disabled ----------------
 async function awardGamificationXP(action, score = 0) {
-    if (isAwardingXp) return;
-    try {
-        isAwardingXp = true;
-        const res = await axios.post('/api/study/award-xp', { action, score });
-        const data = res.data;
-        if (data.success && data.xpGained) {
-            let toastMsg = `+${data.xpGained} XP Earned!`;
-            if (data.levelUp) {
-                toastMsg += ` 🎉 Level Up to Level ${data.level}!`;
-            }
-            showToast(toastMsg, 'success');
-
-            if (data.newBadges && data.newBadges.length > 0) {
-                data.newBadges.forEach(b => {
-                    setTimeout(() => {
-                        showToast(`🏆 Badge Unlocked: ${b.name}!`, 'success');
-                    }, 700);
-                });
-            }
-
-            // Dynamically update navbar level badge if on page
-            const navLvl = document.querySelector('[title="Academic Level"] span');
-            if (navLvl && data.level) {
-                navLvl.innerText = `Lvl ${data.level}`;
-            }
-        }
-    } catch (e) {
-        // Silently skip if guest or offline
-    } finally {
-        setTimeout(() => { isAwardingXp = false; }, 400);
-    }
+    // User requested removal of gamification popups and badges
+    return;
 }
 
 // ---------------- Initialize Responsive Sidebar State ----------------

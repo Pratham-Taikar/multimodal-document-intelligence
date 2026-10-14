@@ -20,19 +20,6 @@
 
                 <% if (isLoggedIn) { %>
 
-                    <% if (typeof user !== 'undefined' && user) { %>
-                        <div class="flex items-center gap-2">
-                            <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-mono font-semibold" title="Academic Level">
-                                <i class="fa-solid fa-bolt text-indigo-400 text-[10px]"></i>
-                                <span>Lvl <%= user.level || 1 %></span>
-                            </span>
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-mono font-semibold" title="Study Streak (Days)">
-                                <i class="fa-solid fa-fire text-rose-400 text-[11px]"></i>
-                                <span><%= user.streak || 1 %>d</span>
-                            </span>
-                        </div>
-                    <% } %>
-
                     <a href="/dashboard" class="text-xs sm:text-sm text-slate-300 hover:text-white transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800/60 flex items-center gap-2">
                         <i class="fa-solid fa-table-columns text-indigo-400 text-xs"></i>
                         <span>Dashboard</span>

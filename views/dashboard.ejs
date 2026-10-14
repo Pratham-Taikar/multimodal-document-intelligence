@@ -29,109 +29,69 @@
                         <%= subjects.reduce((acc, s) => acc + (s.notes ? s.notes.length : 0), 0) %>
                     </div>
                 </div>
-                <div class="bg-slate-900/80 border border-indigo-500/30 rounded-xl px-4 py-2.5 shadow-sm text-center">
-                    <div class="text-[11px] uppercase tracking-wider text-indigo-400 font-bold flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-bolt text-xs"></i>
-                        <span>Level</span>
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2.5 shadow-sm text-center">
+                    <div class="text-[11px] uppercase tracking-wider text-emerald-400 font-bold flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-brain text-xs"></i>
+                        <span>Studio Focus</span>
                     </div>
-                    <div class="text-lg font-bold text-indigo-300 font-mono">
-                        Lvl <%= (gamification && gamification.level) ? gamification.level : 1 %>
-                    </div>
-                </div>
-                <div class="bg-slate-900/80 border border-rose-500/30 rounded-xl px-4 py-2.5 shadow-sm text-center">
-                    <div class="text-[11px] uppercase tracking-wider text-rose-400 font-bold flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-fire text-xs"></i>
-                        <span>Streak</span>
-                    </div>
-                    <div class="text-lg font-bold text-rose-300 font-mono">
-                        <%= (gamification && gamification.streak) ? gamification.streak : 1 %>d
+                    <div class="text-lg font-bold text-slate-200 font-mono">
+                        Active
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Academic Mastery & Gamification Strip -->
-        <div class="bg-gradient-to-r from-slate-900/90 via-[#0b0f19] to-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-8 shadow-xl backdrop-blur-md">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <!-- XP & Level Progress -->
-                <div class="flex-1">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/20">
-                                <i class="fa-solid fa-graduation-cap text-xs"></i>
-                            </span>
-                            <div>
-                                <span class="text-xs font-bold text-white font-mono uppercase tracking-wider">Academic Level <%= (gamification && gamification.level) ? gamification.level : 1 %></span>
-                                <span class="text-[11px] text-slate-400 ml-2">&bull; <%= (gamification && gamification.xp) ? gamification.xp : 0 %> Total XP</span>
-                            </div>
-                        </div>
-                        <span class="text-xs font-mono text-indigo-400 font-semibold">
-                            <%= (gamification && gamification.progress) ? gamification.progress.xpInCurrentLevel : 0 %> / 100 XP to Level <%= (gamification && gamification.level) ? gamification.level + 1 : 2 %>
+        <!-- Academic Wisdom & Motivational Study Quotes Hub -->
+        <div class="bg-gradient-to-r from-slate-900/90 via-[#0b0f19] to-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-7 mb-8 shadow-xl backdrop-blur-md relative overflow-hidden">
+            <!-- Background Ambient Glow -->
+            <div class="absolute -right-16 -top-16 w-56 h-56 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                <!-- Quote Section -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs font-bold border border-indigo-500/20">
+                            <i class="fa-solid fa-quote-left"></i>
                         </span>
+                        <span class="text-xs font-bold text-indigo-400 font-mono uppercase tracking-wider">Daily Academic Inspiration</span>
                     </div>
-                    <!-- Progress Bar -->
-                    <div class="w-full bg-slate-800/80 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-700/60">
-                        <div class="bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 h-full rounded-full transition-all duration-500" 
-                             style="width: <%= (gamification && gamification.progress) ? gamification.progress.progressPercent : 0 %>%;"></div>
-                    </div>
-                    <div class="flex items-center justify-between mt-2 text-[11px] text-slate-400">
-                        <span>Earn XP by completing quizzes (+50 XP), reviewing flashcards (+30 XP), and analyzing papers (+40 XP).</span>
-                        <span class="font-mono text-slate-500"><%= (gamification && gamification.progress) ? gamification.progress.progressPercent : 0 %>% completed</span>
-                    </div>
-                </div>
 
-                <!-- Streak & Status Badge -->
-                <div class="flex items-center gap-3 lg:border-l lg:border-slate-800 lg:pl-6">
-                    <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-xl shadow-inner">
-                        <i class="fa-solid fa-fire"></i>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold text-white uppercase tracking-wider font-mono">
-                            <%= (gamification && gamification.streak) ? gamification.streak : 1 %> Day Study Streak
+                    <div id="quote-container" class="transition-all duration-300">
+                        <blockquote class="text-base sm:text-lg font-medium text-slate-100 italic leading-relaxed tracking-tight" id="motivational-quote-text">
+                            "Study hard what interests you the most in the most undisciplined, irreverent and original manner possible."
+                        </blockquote>
+                        <div class="flex items-center gap-3 mt-3">
+                            <p class="text-xs font-bold text-indigo-300 font-mono" id="motivational-quote-author">&mdash; Richard P. Feynman</p>
+                            <span class="text-[10px] text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700/60" id="motivational-quote-tag">Theoretical Physics</span>
                         </div>
-                        <p class="text-[11px] text-slate-400">Active study consistency multiplier</p>
+                    </div>
+
+                    <div class="mt-4 flex items-center gap-3">
+                        <button onclick="cycleMotivationalQuote()" class="px-3.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700/80 text-xs font-semibold flex items-center gap-2 transition-all shadow-sm active:scale-95 group">
+                            <i class="fa-solid fa-shuffle text-indigo-400 group-hover:rotate-180 transition-transform duration-300"></i>
+                            <span>New Motivation</span>
+                        </button>
+                        <span class="text-[11px] text-slate-500 italic">Curated wisdom for deep study and focus</span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Achievement Badges Showcase -->
-            <div class="mt-6 pt-5 border-t border-slate-800/80">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-award text-amber-400 text-sm"></i>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">Achievement Badges</h3>
-                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">
-                            <%= (gamification && gamification.unlockedCount) ? gamification.unlockedCount : 0 %>/<%= (gamification && gamification.totalBadgesCount) ? gamification.totalBadgesCount : 6 %> Unlocked
-                        </span>
+                <!-- Core Academic Study Principles (Clean 2-Col Grid) -->
+                <div class="lg:w-96 flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 lg:border-l lg:border-slate-800/90 lg:pl-6">
+                    <div class="p-3 bg-[#080c14]/80 border border-slate-800/80 rounded-xl hover:border-indigo-500/40 transition-colors">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-bolt text-indigo-400 text-xs"></i>
+                            <h4 class="text-xs font-bold text-white">Active Recall</h4>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">Quiz yourself before re-reading. Retrieval creates stronger synaptic neural pathways.</p>
                     </div>
-                    <span class="text-[11px] text-slate-500">Perform learning drills to unlock badges</span>
-                </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                    <% if (gamification && gamification.badges) { %>
-                        <% gamification.badges.forEach(badge => { %>
-                            <div class="relative group rounded-xl p-3 border transition-all duration-200 <%= badge.unlocked ? 'bg-[#080c14]/90 border-slate-700/80 hover:border-indigo-500/50 shadow-md' : 'bg-slate-950/40 border-slate-800/60 opacity-50' %>">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm <%= badge.unlocked ? badge.accentColor : 'bg-slate-800/60 text-slate-600 border border-slate-800' %>">
-                                        <i class="fa-solid <%= badge.icon %>"></i>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <h4 class="text-xs font-bold <%= badge.unlocked ? 'text-white' : 'text-slate-500' %> truncate">
-                                            <%= badge.name %>
-                                        </h4>
-                                        <span class="text-[10px] <%= badge.unlocked ? 'text-emerald-400' : 'text-slate-600' %> font-mono">
-                                            <%= badge.unlocked ? 'Unlocked' : 'Locked' %>
-                                        </span>
-                                    </div>
-                                </div>
-                                <!-- Tooltip on Hover -->
-                                <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 border border-slate-700 rounded-lg p-2 text-[11px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-2xl text-center">
-                                    <p class="font-bold text-white mb-0.5"><%= badge.name %></p>
-                                    <p class="text-slate-400"><%= badge.description %></p>
-                                </div>
-                            </div>
-                        <% }) %>
-                    <% } %>
+                    <div class="p-3 bg-[#080c14]/80 border border-slate-800/80 rounded-xl hover:border-violet-500/40 transition-colors">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-lightbulb text-violet-400 text-xs"></i>
+                            <h4 class="text-xs font-bold text-white">The Feynman Rule</h4>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">If you cannot explain a concept simply to a beginner, you do not truly understand it yet.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -437,6 +397,48 @@
                 showToast('Error deleting subject', 'error');
                 console.error(error);
             }
+        }
+
+        // Motivational Study Quotes Bank
+        const studyQuotes = [
+            { quote: "Study hard what interests you the most in the most undisciplined, irreverent and original manner possible.", author: "Richard P. Feynman", tag: "Theoretical Physics" },
+            { quote: "Live as if you were to die tomorrow. Learn as if you were to live forever.", author: "Mahatma Gandhi", tag: "Philosophy" },
+            { quote: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius", tag: "Ancient Wisdom" },
+            { quote: "The mind is not a vessel to be filled, but a fire to be kindled.", author: "Plutarch", tag: "Classical Education" },
+            { quote: "Nothing in life is to be feared, it is only to be understood. Now is the time to understand more, so that we may fear less.", author: "Marie Curie", tag: "Chemistry & Physics" },
+            { quote: "Education is the most powerful weapon which you can use to change the world.", author: "Nelson Mandela", tag: "Leadership" },
+            { quote: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin", tag: "Intellectual Growth" },
+            { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King", tag: "Lifelong Learning" },
+            { quote: "Genius is one percent inspiration and ninety-nine percent perspiration.", author: "Thomas A. Edison", tag: "Innovation" },
+            { quote: "Somewhere, something incredible is waiting to be known.", author: "Carl Sagan", tag: "Astrophysics" },
+            { quote: "I have no special talent. I am only passionately curious.", author: "Albert Einstein", tag: "Physics" },
+            { quote: "Learning never exhausts the mind.", author: "Leonardo da Vinci", tag: "Renaissance Scholar" }
+        ];
+
+        let currentQuoteIdx = 0;
+        function cycleMotivationalQuote() {
+            const container = document.getElementById("quote-container");
+            const textEl = document.getElementById("motivational-quote-text");
+            const authorEl = document.getElementById("motivational-quote-author");
+            const tagEl = document.getElementById("motivational-quote-tag");
+            if (!container || !textEl || !authorEl || !tagEl) return;
+
+            let nextIdx;
+            do {
+                nextIdx = Math.floor(Math.random() * studyQuotes.length);
+            } while (nextIdx === currentQuoteIdx && studyQuotes.length > 1);
+            currentQuoteIdx = nextIdx;
+
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(4px)';
+            setTimeout(() => {
+                const item = studyQuotes[currentQuoteIdx];
+                textEl.innerText = `"${item.quote}"`;
+                authorEl.innerText = `— ${item.author}`;
+                tagEl.innerText = item.tag;
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 200);
         }
     </script>
 
