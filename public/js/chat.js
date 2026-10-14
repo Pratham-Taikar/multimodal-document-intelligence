@@ -346,6 +346,7 @@ async function uploadFileList(files) {
         studioCache.clear('flashcards');
         studioCache.clear('quiz');
         studioCache.clear('short_answers');
+        studioCache.clear('research');
         loadDocuments();
     } catch (err) {
         showToast(err.response?.data?.message || "Upload failed. Please upload PDF, DOCX, or PPTX.", "error");
@@ -1885,7 +1886,7 @@ async function loadResearchPaperInfo() {
 }
 
 // ---------------- Initialize Studio ----------------
-document.addEventListener("DOMContentLoaded", () => {
+function initStudio() {
     loadDocuments();
     loadResearchPaperInfo();
     renderMessages();
@@ -1894,7 +1895,13 @@ document.addEventListener("DOMContentLoaded", () => {
     restoreQuizTab();
     restoreQuestionsTab();
     restoreResearchTab();
-});
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initStudio);
+} else {
+    initStudio();
+}
 
 // ---------------- Visual Citation & Coordinate Inspector ----------------
 let currentInspectorCitation = null;
