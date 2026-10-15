@@ -129,7 +129,7 @@ async function readJsonResponse(provider, response) {
 }
 
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
-const GEMINI_FALLBACK_MODELS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-flash-latest'];
+const GEMINI_FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest'];
 
 function normalizeGeminiModel(rawModel) {
   if (!rawModel) return DEFAULT_GEMINI_MODEL;
@@ -137,7 +137,7 @@ function normalizeGeminiModel(rawModel) {
   if (cleaned.includes('1.5') || cleaned.includes('2.5') || cleaned.includes('1.0') || cleaned.includes('2.0')) {
     return DEFAULT_GEMINI_MODEL;
   }
-  return cleaned;
+  return cleaned || DEFAULT_GEMINI_MODEL;
 }
 
 async function generateWithGemini(prompt, modelOverride, options = {}) {
@@ -468,7 +468,8 @@ Provide a clear, structured markdown summary so students can query, cite, and un
   if (geminiKeys.length > 0) {
     for (const key of geminiKeys) {
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+        const visionModel = process.env.GEMINI_VISION_MODEL || DEFAULT_GEMINI_MODEL;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${visionModel}:generateContent?key=${encodeURIComponent(key)}`;
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

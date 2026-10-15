@@ -4,7 +4,12 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  name: { type: String, required: true },
+  name: { 
+    type: String, 
+    default: function() { 
+      return this.username || this.get?.('username') || (this.email ? this.email.split('@')[0] : 'User'); 
+    } 
+  },
   customApiKey: { type: String, default: '' },
   customGroqApiKey: { type: String, default: '' },
   xp: { type: Number, default: 0 },
@@ -19,6 +24,13 @@ const userSchema = new mongoose.Schema({
     unlockedAt: { type: Date, default: Date.now }
   }],
   createdAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+userSchema.pre('validate', function(next) {
+  if (!this.name) {
+    this.name = this.username || this.get?.('username') || (this.email ? this.email.split('@')[0] : 'User');
+  }
+  next();
 });
 
 userSchema.pre('save', async function(next) {
@@ -28,6 +40,7 @@ userSchema.pre('save', async function(next) {
 });
 
 userSchema.methods.comparePassword = async function(password) {
+  if (!this.password || !password) return false;
   return await bcrypt.compare(password, this.password);
 };
 
