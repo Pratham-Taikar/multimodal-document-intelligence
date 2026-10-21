@@ -52,6 +52,8 @@ backend/.env.*
 # Local Data & Volumes
 data/
 pgdata/
+.postgres_data/
+scripts/*.json
 *.log
 
 # IDE & OS

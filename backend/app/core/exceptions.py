@@ -29,6 +29,36 @@ class AppException(Exception):
         self.details = details or {}
 
 
+class EntityNotFoundError(AppException):
+    def __init__(self, message: str = "Entity not found", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            code="NOT_FOUND",
+            status_code=status.HTTP_404_NOT_FOUND,
+            details=details,
+        )
+
+
+class PermissionDeniedError(AppException):
+    def __init__(self, message: str = "Permission denied", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            code="PERMISSION_DENIED",
+            status_code=status.HTTP_403_FORBIDDEN,
+            details=details,
+        )
+
+
+class ValidationAppError(AppException):
+    def __init__(self, message: str = "Validation error", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            code="VALIDATION_ERROR",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            details=details,
+        )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Registers global exception handlers on the FastAPI application."""
 

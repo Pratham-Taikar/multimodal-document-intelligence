@@ -61,11 +61,12 @@ See [development.md](development.md) for the annotated tree and per-directory de
 +-------------------------------------------------------------------------------+
 ```
 
-> **Note**: The diagram describes the **target architecture**. The current
-> phase (Phase 1 — scaffolding) implements only the application shell, routing,
-> typed configuration, logging/error handling, the `/api/v1/health` endpoint,
-> and database connectivity validation. Ingestion, retrieval, RAG, SSE
-> streaming, and citations arrive in later, independently reviewed phases.
+> **Canonical Persistence Layer Decision**: PostgreSQL 16 with SQLAlchemy 2.0 Async,
+> asyncpg, and Alembic serves as the single canonical source of truth for the relational
+> database layer. The persistent, user-centric schema (users, subjects, documents, versions,
+> evidence, learning resource registry, MCQ sets, assessments, attempts, short answers,
+> source associations, and study activities) is implemented in migration `e74ffa4c1223` (`0002_user_centric_persistence`),
+> with safe import facilities from prototype MongoDB data.
 
 ### Subsystem Responsibilities
 
